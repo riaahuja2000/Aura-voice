@@ -284,6 +284,12 @@ def _get_object(path: str) -> tuple[bytes, str]:
     return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
 
 
+def _storage_ready() -> bool:
+    """Object storage is optional. When self-hosting without it, uploads are disabled
+    gracefully (everything else keeps working)."""
+    return bool(EMERGENT_LLM_KEY)
+
+
 # ---------------------------------------------------------------- (no external AI)
 # This app uses ZERO AI inference credit. Speech-to-text and text-to-speech run
 # on the user's device (free); answers come only from the local knowledge engine.
@@ -455,6 +461,8 @@ async def update_settings(body: SettingsBody, owner: dict = Depends(require_owne
 
 @api.post("/owner/upload")
 async def upload_branding(kind: str = Form(...), file: UploadFile = File(...), owner: dict = Depends(require_owner)):
+    if not _storage_ready():
+        raise HTTPException(503, "Image uploads need object storage. Set an OBJECT_STORAGE key, or edit branding text only.")
     if kind not in ("logo", "background"):
         raise HTTPException(400, "Invalid upload kind")
     ct = (file.content_type or "").lower()
@@ -615,6 +623,8 @@ async def delete_knowledge(eid: str, owner: dict = Depends(require_owner)):
 
 @api.post("/owner/knowledge/upload")
 async def upload_knowledge(file: UploadFile = File(...), owner: dict = Depends(require_owner)):
+    if not _storage_ready():
+        raise HTTPException(503, "File uploads need object storage. Use 'Add answer' to expand the knowledge base instead.")
     data = await file.read()
     if not data:
         raise HTTPException(400, "Empty file.")
