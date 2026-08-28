@@ -1,6 +1,9 @@
 import { storage } from "@/src/utils/storage";
 
-const BASE = process.env.EXPO_PUBLIC_BACKEND_URL;
+// Accepts a full URL (preview) or a bare host (Render blueprint fromService) and
+// normalises to an https base. No trailing /api.
+const RAW_BASE = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/+$/, "");
+const BASE = RAW_BASE ? (RAW_BASE.startsWith("http") ? RAW_BASE : `https://${RAW_BASE}`) : "";
 export const TOKEN_KEY = "velora_token";
 
 export type Lang = "en" | "hi" | "hng";

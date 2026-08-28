@@ -1,0 +1,59 @@
+# Render Blueprint — one-click deploy for VELORA (free tier)
+# Non-technical steps:
+#   1) Push this repo to GitHub.
+#   2) On Render: New + -> Blueprint -> connect this repo.
+#   3) Render reads this file and creates a backend (web service) + frontend (static site).
+#   4) Fill the values it asks for (MONGO_URL, OWNER_EMAIL, OWNER_PASSWORD, etc.), then Deploy.
+#   5) Get a free MongoDB connection string from MongoDB Atlas (mongodb.com/atlas) for MONGO_URL.
+# Auto-deploy from GitHub is on by default: every push redeploys.
+
+services:
+  # ---------- Backend: FastAPI + MongoDB ----------
+  - type: web
+    name: velora-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/
+    autoDeploy: true
+    envVars:
+      - key: MONGO_URL
+        sync: false            # paste your MongoDB Atlas connection string
+      - key: DB_NAME
+        value: velora
+      - key: JWT_SECRET
+        generateValue: true    # Render generates a strong secret automatically
+      - key: OWNER_EMAIL
+        sync: false
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: OWNER_NAME
+        value: Owner
+      - key: SEED_CUSTOMER_EMAIL
+        sync: false
+      - key: SEED_CUSTOMER_PASSWORD
+        sync: false
+      - key: SEED_CUSTOMER_NAME
+        value: Seeker
+
+  # ---------- Frontend: Expo web (static site) ----------
+  - type: web
+    name: velora-frontend
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: yarn install --frozen-lockfile && npx expo export --platform web
+    staticPublishPath: dist
+    autoDeploy: true
+    envVars:
+      - key: EXPO_PUBLIC_BACKEND_URL
+        fromService:
+          type: web
+          name: velora-backend
+          property: host       # backend hostname; api.ts adds https:// automatically
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
