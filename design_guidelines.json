@@ -1,0 +1,166 @@
+{
+  "app_name": "VELORA",
+  "personality": "6 Glass / Luxe DARK",
+  "personality_one_liner": "A cinematic, minimal, and intensely luxurious voice-first oracle, bridging deep midnight void with glowing crystal-pink elegance and regal gold.",
+  "color": {
+    "surface": "#050508",
+    "onSurface": "#F7F7F9",
+    "surfaceSecondary": "#12121A",
+    "onSurfaceSecondary": "#E1E1E6",
+    "surfaceTertiary": "#1E1E2A",
+    "onSurfaceTertiary": "#C0C0C8",
+    "surfaceInverse": "#F5EAF0",
+    "onSurfaceInverse": "#050508",
+    "brand": "#D4AF37",
+    "brandPrimary": "#D28CA7",
+    "onBrandPrimary": "#050508",
+    "brandSecondary": "#D4AF37",
+    "onBrandSecondary": "#050508",
+    "brandTertiary": "#3D2C40",
+    "onBrandTertiary": "#EEDEE4",
+    "success": "#5C7C5A",
+    "onSuccess": "#E9F2E9",
+    "warning": "#B68B4C",
+    "onWarning": "#050508",
+    "error": "#8C3B3B",
+    "onError": "#F2E6E6",
+    "info": "#4A6B8C",
+    "onInfo": "#E6F0F7",
+    "border": "#2A2A36",
+    "borderStrong": "#D4AF37",
+    "divider": "#1A1A24"
+  },
+  "typography": {
+    "displayFontFamily": "Cormorant Garamond",
+    "textFontFamily": "Satoshi",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24,
+      "3xl": 32
+    }
+  },
+  "spacing": {
+    "rule": "Maintain generous breathing room to achieve an editorial, luxury aesthetic. Use precise vertical rhythm. Avoid dense packing.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": 0,
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": true,
+    "do's": [
+      "Use heavy tint (≥75% of surface) underneath glass on dark mode to ensure text is readable against the lush crystal pink background.",
+      "Apply glass to bottom tab bars, sticky headers, and bottom sheets.",
+      "Use glass for the answer reveal card that slides up from the bottom over the hero background."
+    ],
+    "dont's": [
+      "Never blur body text regions or form fields.",
+      "Don't stack more than two blur surfaces on one screen."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Home (Oracle)",
+      "purpose": "Extraordinary minimal luxury landing with a single primary interaction: a glowing central voice orb to consult the oracle.",
+      "states": {
+        "loading": "Subtle pulsing gold ring around the orb.",
+        "empty": "Idle: 'Tap to ask' with the text input field visible above the orb.",
+        "error": "Frosted glass snackbar dropping from the top with an error message and a retry icon."
+      },
+      "layout": "Full-bleed background image (lush pink crystal) layered with a vertical gradient scrim (transparent to 90% surface at the bottom). A minimalistic top bar showing tonight's moon phase. The core UI sits in the lower half: a clean text input floating directly above a large, prominent glowing crystal/lotus orb (the primary focal point). Transitions map to states: 'Consulting...' (fluid audio processing animation), 'VELORA speaks' (audio waveform). The final answer slides up gracefully as a frosted glass sheet covering the lower half of the screen."
+    },
+    {
+      "name": "Customer Dashboard (Journal)",
+      "purpose": "An exceptionally simple, premium, uncluttered private reading journal.",
+      "states": {
+        "loading": "Dark shimmer skeletons mimicking the layout of glass rows.",
+        "empty": "Minimalistic gold constellation or crystal illustration with text: 'Your journal is empty. Ask the oracle to begin.'",
+        "error": "Centered readable message with a gold 'Retry' button."
+      },
+      "layout": "Solid midnight background (surface). A scrollable, clean list of past questions and answers. Each session is a glass-effect card or subtly separated by thin dividers. Audio replay buttons on each row. Avoid complex navigation or dense meta-data; prioritize typography and generous padding."
+    },
+    {
+      "name": "Owner Dashboard",
+      "purpose": "A comprehensive control center hidden from customers, emphasizing utility without sacrificing the luxury aesthetic.",
+      "states": {
+        "loading": "Centered gold spinner over a dark surface.",
+        "empty": "N/A - data always present.",
+        "error": "Error message with a clean retry action."
+      },
+      "layout": "Top section features sleek, glass-morphic metric cards (Total Sessions, Users). Below, a clean line chart for 'Last 7 Days'. Following are distinct sections for Member Management and Branding Controls. Modular layout using surfaceSecondary cards with lg margins."
+    },
+    {
+      "name": "Account / Profile",
+      "purpose": "Minimalistic identity and settings management.",
+      "states": {
+        "loading": "Centered spinner.",
+        "empty": "N/A",
+        "error": "Standard error prompt."
+      },
+      "layout": "Generous vertical spacing. Profile identity at the top. A premium segmented control for language switching (EN/HI/Hinglish). A subtle Role Badge (Owner/Customer). A minimalist sign-out button anchored at the bottom."
+    },
+    {
+      "name": "Login / Forgot Password",
+      "purpose": "Elegant and frictionless email+password authentication.",
+      "states": {
+        "loading": "Button label shifts to a subtle loading animation.",
+        "empty": "Clean inputs.",
+        "error": "Inline red validation text (error color)."
+      },
+      "layout": "Centered luxury gold VELORA logo. Clean input fields using surfaceTertiary background and thin gold focus rings. A prominent primary CTA (Login) and a secondary text link for Forgot Password. The pink crystal background faintly blurred behind a heavy dark scrim."
+    }
+  ],
+  "images": {
+    "hero_backdrop": {
+      "url": "https://images.unsplash.com/photo-1719529067713-2c68aaefe28b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHxwaW5rJTIwbWFnZW50YSUyMGNyeXN0YWwlMjBhYnN0cmFjdCUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzg3OTM2NDcwfDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Lush pink and magenta crystal abstract background"
+    },
+    "brand_logo": {
+      "url": "https://images.unsplash.com/photo-1755811351410-889bac5738b0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwxfHxnb2xkJTIwY3J5c3RhbCUyMGxvdHVzJTIwZGFyayUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzg3OTM2NDcwfDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Luxury gold crystal lotus logo"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Strictly follow the Glass / Luxe DARK personality guidelines. Keep the entire UI dark, using deep midnight/obsidian blacks (#050508) as the root surface, accented with gold (#D4AF37) and luminous soft pink (#D28CA7).",
+    "Font hierarchy is critical for this editorial/luxury feel: Use Cormorant Garamond exclusively for large headings, display text, and numbers (where a serif looks elegant). Use Satoshi (max weight 500) for all body copy, inputs, tabs, and buttons.",
+    "Implement the MANDATORY gradient-to-dark scrim pattern on the Home and Login screens where the hero_backdrop image is used. The scrim must fade from transparent at the top to ≥90% surface (#050508) at the bottom so that the text input and voice orb are perfectly readable and grounded.",
+    "The central interaction on the Home screen must be singularly focused. A single glowing orb placed in the lower-middle with the text input right above it. Animate state changes (Tap to speak -> Consulting -> VELORA speaks) fluidly without abruptly jumping between screens.",
+    "When revealing the text answer/transcript on the Home screen, slide up a glass sheet (expo-glass-effect or expo-blur with heavy underlying tint) over the background instead of navigating to a new flat screen.",
+    "Use Phosphor icons with a thin or light weight to match the premium, refined serif typography. Avoid chunky or filled icons except for the active tab.",
+    "Ensure all buttons have a minimum touch target of 44x44pt and employ subtle haptics (Haptics.impactAsync) on press. Map these in the haptics block for the development agent."
+  ],
+  "haptics": {
+    "voice_orb_tap": "medium",
+    "language_switch": "light",
+    "tab_press": "light",
+    "primary_button": "medium",
+    "audio_replay": "light"
+  }
+}

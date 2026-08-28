@@ -1,0 +1,28 @@
+{
+  "summary": "Full backend + frontend regression pass for VELORA. Backend: 23/23 pytest tests green covering auth (login/register/forgot-password/owner-reserved), profile update, oracle consult+persist, TTS speak (audio/mpeg mp3 served), settings public/owner PUT + RBAC (customer 403), owner overview shape, image-upload MIME rejection + RBAC, member activate/deactivate (token version bump, login blocked while deactivated) and password reset (old token invalidated). Frontend (mobile viewport 390x844): customer flow — login, home Oracle ask, answer sheet with topic chips + question + KB answer, replay + ask again, journal shows past readings with replay, account (name + language switch EN/Hindi/Hinglish), sign out. Owner flow — login, Owner tab visible with branding fields, 3 members, save & publish button clickable; Journal tab correctly hidden from owner. RBAC and tab-visibility rules honored. Minor console warnings only (pointerEvents deprecation from RN, useNativeDriver on web); no functional issues found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [
+      {"component": "console-warning", "issue": "React Native web warning: `props.pointerEvents is deprecated. Use style.pointerEvents` — likely from a third-party component (e.g., inside expo-router or animation library). Non-blocking but should be traced and migrated to style.pointerEvents where our own code emits it."}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Optional: locate and fix the `props.pointerEvents is deprecated` warning source in the codebase to keep the console clean."
+  ],
+  "critical_code_review_comments": [
+    "server.py stays ~570 lines - approaching threshold; consider splitting into routers (auth/oracle/owner/settings) if the file continues to grow.",
+    "TTS cache is in-process memory only; if backend restarts between /speak and /tts fetch, the mp3 URL returns 404. Acceptable per current UX (client will simply Replay to regenerate) but worth documenting.",
+    "Object-storage init errors are swallowed at startup; uploads may fail silently until first use. Current error path returns 502, which is fine, but a health probe surfacing storage state would help ops."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (23/23)", "frontend": "100% of tested flows"},
+  "seed_data_creation": "Tests create disposable customers with TEST_ prefix / random emails; readings created during oracle consult tests remain (isolated per user).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend URL env key is EXPO_PUBLIC_BACKEND_URL (not EXPO_BACKEND_URL). Owner tabs = Oracle/Owner/Account, Customer tabs = Oracle/Journal/Account (custom tab bar). testIDs are present for all interactive elements including lang-en / lang-hi / lang-hng, ask-input, ask-send, answer-replay, answer-ask-again, member-{id}, toggle-{id}, reset-{id}, brand-appname/tagline/subtitle, brand-save, account-name/save/logout, login-email/password/submit, forgot-link, go-register.",
+  "rca_of_issue": "No new bugs found. Prior smoke-tested behaviour reproduced cleanly."
+}

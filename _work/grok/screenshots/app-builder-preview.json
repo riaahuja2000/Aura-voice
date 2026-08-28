@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "VELORA",
+      "hasCanvas": false,
+      "bodyTextLen": 17,
+      "bodyTextHash": "7f2f40b33ccb03a70f56d9c4aaf29393b3317dcec1bd543a65819acdc66d36e9",
+      "bodyTextPrefix": "VELORA LOADING...",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "VELORA",
+      "hasCanvas": false,
+      "bodyTextLen": 250,
+      "bodyTextHash": "daf18286cf35893667224d16d41ae510cee51f1fe726963dda8820b2d9194315",
+      "bodyTextPrefix": "EN WELCOME BACK Log in to your account Sign in to consult VELORA",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
