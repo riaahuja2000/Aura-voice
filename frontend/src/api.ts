@@ -92,6 +92,27 @@ export const api = {
     req<{ url: string }>("/oracle/speak", { method: "POST", body: { text, lang } }),
   readings: () => req<Reading[]>("/readings"),
 
+  async transcribe(uri: string, lang: Lang, name: string, type: string): Promise<{ text: string }> {
+    const token = await getToken();
+    const form = new FormData();
+    form.append("lang", lang);
+    if (typeof window !== "undefined" && (window as any).document) {
+      const blob = await (await fetch(uri)).blob();
+      form.append("file", blob, name);
+    } else {
+      // @ts-ignore native multipart shape
+      form.append("file", { uri, name, type });
+    }
+    const res = await fetch(`${BASE}/api/oracle/transcribe`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((data && data.detail) || "Could not hear you");
+    return data;
+  },
+
   // settings
   getSettings: () => req<Settings>("/settings", { auth: false }),
 

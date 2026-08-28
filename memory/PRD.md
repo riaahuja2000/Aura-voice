@@ -16,6 +16,11 @@ Premium mobile-first remake of an occult voice oracle (velora-occult-voice.base4
 - Seeker (customer): asks one question, hears spoken guidance, keeps a private journal.
 - Keeper (owner): controls branding, voice, members, and views analytics.
 
+## Implemented (2026-06 build 2)
+- **Voice input (mic-first)**: Home orb is now tap-to-speak. Tap → record (expo-audio) → tap again → OpenAI Whisper transcribes (EN/HI/auto) → knowledge-base answer → OpenAI TTS spoken. No typing.
+- **No generic answers**: engine restricted to occult sciences (A-Z), aura, and mindfulness. Any unmatched/off-topic question is grounded in the aura + mindfulness pool; the generic "general" pack is never surfaced. Added a mindfulness knowledge set (EN/HI/HNG) + keyword detection.
+- **Removed the journal/diary**: customer tabs are now Oracle + Account only. Readings still persist server-side for owner analytics but there is no customer diary.
+
 ## Implemented (2026-06 build 1)
 - Auth: login / register / forgot-password (owner-fulfilled reset requests) / JWT / RBAC.
 - Home Oracle: type question → consult → KB answer → OpenAI TTS spoken → glass answer sheet (topics, transcript, replay, ask again).

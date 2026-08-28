@@ -23,7 +23,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const { user } = useAuth();
   const { t } = useI18n();
 
-  const order = user?.is_owner ? ["home", "owner", "account"] : ["home", "journal", "account"];
+  const order = user?.is_owner ? ["home", "owner", "account"] : ["home", "account"];
   const activeRouteName = state.routes[state.index]?.name;
 
   return (
@@ -70,7 +70,6 @@ export default function AppLayout() {
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: COLORS.surface } }}
     >
       <Tabs.Screen name="home" />
-      <Tabs.Screen name="journal" />
       <Tabs.Screen name="owner" />
       <Tabs.Screen name="account" />
     </Tabs>

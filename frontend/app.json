@@ -22,7 +22,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.emergent.mystiquevoicepro.fqjz1d",
-      "permissions": ["READ_MEDIA_IMAGES"]
+      "permissions": ["READ_MEDIA_IMAGES", "RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",
@@ -40,7 +40,12 @@
           "backgroundColor": "#000000"
         }
       ],
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Speak your question to the oracle."
+        }
+      ],
       [
         "expo-image-picker",
         {

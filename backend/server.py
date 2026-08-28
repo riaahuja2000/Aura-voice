@@ -3,6 +3,7 @@ import re
 import uuid
 import hashlib
 import logging
+import tempfile
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Literal
@@ -286,6 +287,20 @@ async def _synthesize(text: str, voice: str, speed: float) -> str:
     return key
 
 
+async def _transcribe(path: str, lang: str) -> str:
+    from emergentintegrations.llm.openai import OpenAISpeechToText
+    stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
+    kwargs: dict = {"model": "whisper-1", "response_format": "json"}
+    if lang == "en":
+        kwargs["language"] = "en"
+    elif lang == "hi":
+        kwargs["language"] = "hi"
+    resp = await stt.transcribe(file=Path(path), **kwargs)
+    if isinstance(resp, str):
+        return resp.strip()
+    return (getattr(resp, "text", None) or str(resp)).strip()
+
+
 # ---------------------------------------------------------------- auth routes
 @api.get("/")
 async def root():
@@ -361,6 +376,35 @@ async def update_me(body: ProfileBody, user: dict = Depends(get_current_user)):
 
 
 # ---------------------------------------------------------------- oracle
+@api.post("/oracle/transcribe")
+async def transcribe(file: UploadFile = File(...), lang: str = Form("en"), user: dict = Depends(get_current_user)):
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(503, "Voice input is unavailable.")
+    data = await file.read()
+    if not data:
+        raise HTTPException(400, "Empty recording.")
+    if len(data) > 25 * 1024 * 1024:
+        raise HTTPException(413, "Recording too long.")
+    suffix = Path(file.filename or "q.m4a").suffix.lower()
+    if suffix not in {".m4a", ".mp4", ".mp3", ".wav", ".webm", ".mpeg", ".mpga"}:
+        suffix = ".m4a"
+    fd, tmp = tempfile.mkstemp(suffix=suffix)
+    os.close(fd)
+    try:
+        with open(tmp, "wb") as f:
+            f.write(data)
+        text = await _transcribe(tmp, lang)
+    except Exception:
+        logger.exception("Transcription failed")
+        raise HTTPException(502, "Could not hear you clearly. Try again.")
+    finally:
+        try:
+            Path(tmp).unlink(missing_ok=True)
+        except Exception:
+            pass
+    return {"text": text}
+
+
 @api.post("/oracle/consult")
 async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
     question = (body.question or "").strip()[:800]

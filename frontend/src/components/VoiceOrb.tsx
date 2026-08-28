@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { COLORS } from "@/theme";
 
-export type OrbState = "idle" | "consulting" | "speaking";
+export type OrbState = "idle" | "listening" | "processing" | "speaking";
 
 const SIZE = 188;
 
@@ -73,7 +73,7 @@ export function VoiceOrb({
   }, [breathe]);
 
   useEffect(() => {
-    if (state === "consulting") {
+    if (state === "processing" || state === "listening") {
       spin.value = withRepeat(withTiming(1, { duration: 3200, easing: Easing.linear }), -1, false);
     } else {
       cancelAnimation(spin);
@@ -127,9 +127,9 @@ export function VoiceOrb({
             </View>
           ) : (
             <Ionicons
-              name={state === "consulting" ? "sparkles-outline" : "flower-outline"}
+              name={state === "listening" ? "mic" : state === "processing" ? "sparkles" : "flower-outline"}
               size={54}
-              color={COLORS.goldSoft}
+              color={state === "listening" ? COLORS.pink : COLORS.goldSoft}
             />
           )}
         </LinearGradient>
