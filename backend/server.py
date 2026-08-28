@@ -97,6 +97,8 @@ def public_user(u: dict) -> dict:
         "email": u["email"],
         "role": u["role"],
         "language": u.get("language", "en"),
+        "voice": u.get("voice", ""),
+        "speed": u.get("speed", 0),
         "active": u.get("active", True),
         "is_owner": u["role"] == "owner",
         "created_at": u.get("created_at"),
@@ -160,6 +162,14 @@ class SpeakBody(BaseModel):
 class ProfileBody(BaseModel):
     name: Optional[str] = Field(default=None, max_length=60)
     language: Optional[Literal["en", "hi", "hng"]] = None
+    voice: Optional[str] = None
+    speed: Optional[float] = None
+
+
+class KnowledgeBody(BaseModel):
+    topic: str
+    lang: Literal["en", "hi", "hng"]
+    text: str = Field(min_length=8)
 
 
 class SettingsBody(BaseModel):
@@ -369,6 +379,10 @@ async def update_me(body: ProfileBody, user: dict = Depends(get_current_user)):
         updates["name"] = body.name.strip()
     if body.language is not None:
         updates["language"] = body.language
+    if body.voice is not None:
+        updates["voice"] = body.voice
+    if body.speed is not None:
+        updates["speed"] = max(0.5, min(2.0, float(body.speed)))
     if updates:
         await db.users.update_one({"id": user["id"]}, {"$set": updates})
         user = await db.users.find_one({"id": user["id"]})
@@ -410,7 +424,13 @@ async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
     question = (body.question or "").strip()[:800]
     if not question:
         raise HTTPException(400, "Please share your question.")
-    result = oracle.compose_answer(question, body.lang)
+    topics = oracle.detect_topics(question)
+    # merge owner-added answers for the detected topics + language
+    extra_by_topic: dict[str, list[str]] = {}
+    cursor = db.knowledge_entries.find({"lang": body.lang, "topic": {"$in": topics}, "deleted_at": None})
+    async for e in cursor:
+        extra_by_topic.setdefault(e["topic"], []).append(e["text"])
+    result = oracle.compose_answer(question, body.lang, extra_by_topic)
     now = datetime.now(timezone.utc).isoformat()
     reading = {
         "id": str(uuid.uuid4()),
@@ -427,6 +447,15 @@ async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
     return reading
 
 
+@api.get("/oracle/daily")
+async def daily(lang: str = "en", user: dict = Depends(get_current_user)):
+    if lang not in ("en", "hi", "hng"):
+        lang = "en"
+    day = datetime.now(timezone.utc).date().isoformat()
+    text = oracle.daily_reading(f"{user['id']}:{day}:{lang}", lang)
+    return {"date": day, "text": text}
+
+
 @api.post("/oracle/speak")
 async def speak(body: SpeakBody, user: dict = Depends(get_current_user)):
     if not EMERGENT_LLM_KEY:
@@ -435,13 +464,13 @@ async def speak(body: SpeakBody, user: dict = Depends(get_current_user)):
     if not text:
         raise HTTPException(400, "Nothing to speak.")
     settings = await db.settings.find_one({"_id": "app"}) or DEFAULT_SETTINGS
-    voice = settings.get("voice", "shimmer")
-    speed = float(settings.get("speed", 0.95))
+    voice = user.get("voice") or settings.get("voice", "shimmer")
+    speed = float(user.get("speed") or settings.get("speed", 0.95))
     try:
         key = await _synthesize(text, voice, speed)
     except Exception:
         logger.exception("TTS failed")
-        raise HTTPException(502, "The oracle's voice faltered. Try again.")
+        raise HTTPException(502, "The occult voice faltered. Try again.")
     return {"url": f"/api/tts/{key}.mp3"}
 
 
@@ -451,6 +480,68 @@ async def get_tts(key: str):
     if audio is None:
         raise HTTPException(404, "Audio expired. Replay to regenerate.")
     return Response(content=audio, media_type="audio/mpeg",
+                    headers={"Cache-Control": "public, max-age=31536000"})
+
+
+# ---------------------------------------------------------------- image (illustration)
+_img_cache: dict[str, bytes] = {}
+
+
+def _img_key(text: str) -> str:
+    return hashlib.sha256(f"img|{text}".encode("utf-8")).hexdigest()
+
+
+async def _illustrate(text: str) -> str:
+    import base64 as _b64
+    key = _img_key(text)
+    if key in _img_cache:
+        return key
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    prompt = (
+        "Create a single luxurious, symbolic mystical illustration that captures the whole meaning of this "
+        "oracle reading so a person can grasp it at a glance. Absolutely no text, letters, or words in the image. "
+        "Style: ethereal and painterly, deep midnight indigo and obsidian with regal gold and soft crystal-pink "
+        "luminescence, occult and aura motifs (moon phases, constellations, sacred geometry, crystals, gentle "
+        "energy light), elegant and high detail, serene and premium. The reading: " + text[:600]
+    )
+    chat = (
+        LlmChat(api_key=EMERGENT_LLM_KEY, session_id=uuid.uuid4().hex,
+                system_message="You are a master mystical illustrator.")
+        .with_model("gemini", "gemini-3.1-flash-image-preview")
+        .with_params(modalities=["image", "text"])
+    )
+    _, images = await chat.send_message_multimodal_response(UserMessage(text=prompt))
+    if not images:
+        raise RuntimeError("no image")
+    data = _b64.b64decode(images[0]["data"])
+    _img_cache[key] = data
+    if len(_img_cache) > 120:
+        for k in list(_img_cache.keys())[:40]:
+            _img_cache.pop(k, None)
+    return key
+
+
+@api.post("/oracle/illustrate")
+async def illustrate(body: SpeakBody, user: dict = Depends(get_current_user)):
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(503, "Imagery is unavailable.")
+    text = (body.text or "").strip()
+    if not text:
+        raise HTTPException(400, "Nothing to illustrate.")
+    try:
+        key = await _illustrate(text)
+    except Exception:
+        logger.exception("Illustration failed")
+        raise HTTPException(502, "The vision would not form. Try again.")
+    return {"url": f"/api/img/{key}.png"}
+
+
+@api.get("/img/{key}.png")
+async def get_img(key: str):
+    data = _img_cache.get(key)
+    if data is None:
+        raise HTTPException(404, "Image expired.")
+    return Response(content=data, media_type="image/png",
                     headers={"Cache-Control": "public, max-age=31536000"})
 
 
@@ -530,6 +621,8 @@ async def owner_overview(owner: dict = Depends(require_owner)):
     topic_counts: dict[str, int] = {}
     for r in readings:
         for t in r.get("topics", []):
+            if t == "general":
+                continue
             topic_counts[t] = topic_counts.get(t, 0) + 1
     most_asked = sorted(topic_counts.items(), key=lambda x: -x[1])[:8]
     most_asked = [{"name": n, "count": c} for n, c in most_asked]
@@ -598,6 +691,99 @@ async def reset_customer(cid: str, body: ResetBody, owner: dict = Depends(requir
                               {"$set": {"password_hash": hash_pw(body.new_password)}, "$inc": {"token_version": 1}})
     await db.reset_requests.update_one({"user_id": cid}, {"$set": {"status": "done"}})
     return {"ok": True}
+
+
+@api.get("/owner/knowledge")
+async def list_knowledge(owner: dict = Depends(require_owner)):
+    topics = [tk for tk in oracle.PACK.keys() if tk != "general"]
+    base_counts = {tk: sum(len(oracle.PACK[tk].get(l, [])) for l in ("en", "hi", "hng")) for tk in topics}
+    entries = await db.knowledge_entries.find({"deleted_at": None}).sort("created_at", -1).to_list(500)
+    for e in entries:
+        e.pop("_id", None)
+    files = await db.kb_files.find({"deleted_at": None}).sort("created_at", -1).to_list(200)
+    for f in files:
+        f.pop("_id", None)
+    custom_counts: dict[str, int] = {}
+    for e in entries:
+        custom_counts[e["topic"]] = custom_counts.get(e["topic"], 0) + 1
+    return {"topics": topics, "base_counts": base_counts, "custom_counts": custom_counts,
+            "entries": entries, "files": files}
+
+
+@api.post("/owner/knowledge")
+async def add_knowledge(body: KnowledgeBody, owner: dict = Depends(require_owner)):
+    if body.topic not in oracle.PACK:
+        raise HTTPException(400, "Unknown tradition.")
+    doc = {
+        "id": str(uuid.uuid4()),
+        "topic": body.topic,
+        "lang": body.lang,
+        "text": body.text.strip(),
+        "deleted_at": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.knowledge_entries.insert_one(dict(doc))
+    doc.pop("_id", None)
+    return doc
+
+
+@api.delete("/owner/knowledge/{eid}")
+async def delete_knowledge(eid: str, owner: dict = Depends(require_owner)):
+    await db.knowledge_entries.update_one({"id": eid}, {"$set": {"deleted_at": datetime.now(timezone.utc).isoformat()}})
+    return {"ok": True}
+
+
+@api.post("/owner/knowledge/upload")
+async def upload_knowledge(file: UploadFile = File(...), owner: dict = Depends(require_owner)):
+    data = await file.read()
+    if not data:
+        raise HTTPException(400, "Empty file.")
+    if len(data) > 25 * 1024 * 1024:
+        raise HTTPException(400, "File must be under 25MB.")
+    name = file.filename or "knowledge.bin"
+    ext = (name.rsplit(".", 1)[-1] if "." in name else "bin").lower()
+    ct = file.content_type or "application/octet-stream"
+    path = f"{APP_SLUG}/knowledge/{uuid.uuid4().hex}.{ext}"
+    try:
+        await run_in_threadpool(_put_object, path, data, ct)
+    except Exception:
+        logger.exception("KB upload failed")
+        raise HTTPException(502, "Upload failed. Try again.")
+    ingested = 0
+    if ext == "json":
+        try:
+            import json as _json
+            parsed = _json.loads(data.decode("utf-8"))
+            now = datetime.now(timezone.utc).isoformat()
+            bulk = []
+            for topic, langs in parsed.items():
+                if topic not in oracle.PACK or not isinstance(langs, dict):
+                    continue
+                for lg, arr in langs.items():
+                    if lg not in ("en", "hi", "hng") or not isinstance(arr, list):
+                        continue
+                    for txt in arr:
+                        if isinstance(txt, str) and len(txt.strip()) >= 8:
+                            bulk.append({"id": str(uuid.uuid4()), "topic": topic, "lang": lg,
+                                         "text": txt.strip(), "deleted_at": None, "created_at": now})
+            if bulk:
+                await db.knowledge_entries.insert_many(bulk)
+                ingested = len(bulk)
+        except Exception:
+            logger.warning("KB json ingest skipped (not the expected schema)")
+    rec = {
+        "id": str(uuid.uuid4()),
+        "name": name,
+        "path": path,
+        "content_type": ct,
+        "size": len(data),
+        "ingested": ingested,
+        "deleted_at": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.kb_files.insert_one(dict(rec))
+    rec.pop("_id", None)
+    return rec
 
 
 app.include_router(api)

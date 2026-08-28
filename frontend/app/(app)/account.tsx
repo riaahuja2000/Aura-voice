@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,6 +10,9 @@ import { api } from "@/src/api";
 import { Btn, Field, Txt, useToast } from "@/src/ui";
 import { LangSwitcher } from "@/src/components/LangSwitcher";
 
+const VOICES = ["shimmer", "coral", "nova", "sage", "fable", "alloy", "echo", "onyx", "ash"];
+const SPEEDS = [0.85, 0.95, 1.0, 1.15];
+
 export default function Account() {
   const { t } = useI18n();
   const { user, setUser, logout } = useAuth();
@@ -19,6 +22,19 @@ export default function Account() {
 
   const [name, setName] = useState(user?.name || "");
   const [saving, setSaving] = useState(false);
+  const [voice, setVoice] = useState(user?.voice || "shimmer");
+  const [speed, setSpeed] = useState<number>(user?.speed || 0.95);
+
+  const saveVoice = async (v: string, s: number) => {
+    setVoice(v);
+    setSpeed(s);
+    try {
+      const updated = await api.updateProfile({ voice: v, speed: s });
+      setUser(updated);
+    } catch {
+      /* keep local selection */
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -98,6 +114,26 @@ export default function Account() {
           <LangSwitcher onChange={onLang} />
         </View>
 
+        {/* Voice choice */}
+        <View style={styles.section}>
+          <Txt font="bodyBold" style={styles.sectionLabel}>{t("voice_label")}</Txt>
+          <View style={styles.chips}>
+            {VOICES.map((v) => (
+              <Pressable key={v} testID={`voice-${v}`} onPress={() => saveVoice(v, speed)} style={[styles.chip, voice === v && styles.chipOn]}>
+                <Txt font="bodyMedium" style={[styles.chipTxt, voice === v && { color: COLORS.onGold }]}>{v}</Txt>
+              </Pressable>
+            ))}
+          </View>
+          <Txt font="bodyBold" style={[styles.sectionLabel, { marginTop: SPACING.md }]}>{t("speed_label")}</Txt>
+          <View style={styles.chips}>
+            {SPEEDS.map((s) => (
+              <Pressable key={s} testID={`speed-${s}`} onPress={() => saveVoice(voice, s)} style={[styles.chip, speed === s && styles.chipOn]}>
+                <Txt font="bodyMedium" style={[styles.chipTxt, speed === s && { color: COLORS.onGold }]}>{s}x</Txt>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
         {/* Meta */}
         <View style={styles.metaRow}>
           <View style={styles.metaCard}>
@@ -138,6 +174,10 @@ const styles = StyleSheet.create({
   roleTxt: { color: COLORS.gold, fontSize: 11 },
   section: { gap: SPACING.md },
   sectionLabel: { color: COLORS.gold, fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase" },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm },
+  chip: { backgroundColor: COLORS.surface3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: SPACING.md, paddingVertical: 8 },
+  chipOn: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
+  chipTxt: { color: COLORS.onSurface3, fontSize: 12 },
   metaRow: { flexDirection: "row", gap: SPACING.md },
   metaCard: {
     flex: 1, backgroundColor: COLORS.surface2, borderRadius: RADIUS.lg, padding: SPACING.lg,

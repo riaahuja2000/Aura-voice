@@ -1,5 +1,6 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, View } from "react-native";
+import { Image } from "expo-image";
 import Animated, { FadeIn, SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollView } from "react-native-gesture-handler";
@@ -31,11 +32,17 @@ export default function Home() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const audio = useAudio();
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [reading, setReading] = useState<Reading | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [illustrating, setIllustrating] = useState(false);
+
+  const meterTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastLoud = useRef<number>(0);
+  const startedAt = useRef<number>(0);
 
   const orbState: OrbState =
     phase === "listening" ? "listening" : phase === "processing" ? "processing" : audio.playing || audio.loading ? "speaking" : "idle";
@@ -44,6 +51,7 @@ export default function Home() {
     useCallback(() => {
       return () => {
         audio.stop();
+        if (meterTimer.current) clearInterval(meterTimer.current);
         recorder.stop?.().catch?.(() => {});
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,6 +79,13 @@ export default function Home() {
     return false;
   };
 
+  const clearMeter = () => {
+    if (meterTimer.current) {
+      clearInterval(meterTimer.current);
+      meterTimer.current = null;
+    }
+  };
+
   const startListening = async () => {
     const ok = await ensureMic();
     if (!ok) return;
@@ -79,14 +94,51 @@ export default function Home() {
       await recorder.prepareToRecordAsync();
       recorder.record();
       setReading(null);
+      setImageUrl(null);
       setPhase("listening");
+      startedAt.current = Date.now();
+      lastLoud.current = Date.now();
+      clearMeter();
+      // Auto-listen: end automatically after a short pause in speech.
+      meterTimer.current = setInterval(() => {
+        try {
+          const st: any = recorder.getStatus ? recorder.getStatus() : null;
+          const m = st && typeof st.metering === "number" ? st.metering : null;
+          const now = Date.now();
+          if (m !== null && !Number.isNaN(m) && m > -35) lastLoud.current = now;
+          const elapsed = now - startedAt.current;
+          if (elapsed > 1200 && now - lastLoud.current > 1600) {
+            clearMeter();
+            stopAndProcess();
+          } else if (elapsed > 20000) {
+            clearMeter();
+            stopAndProcess();
+          }
+        } catch {
+          /* metering unavailable (e.g. web) — rely on manual tap */
+        }
+      }, 300);
     } catch {
       toast.show(t("try_again"), "error");
       setPhase("idle");
     }
   };
 
+  const runIllustration = async (text: string) => {
+    setIllustrating(true);
+    setImageUrl(null);
+    try {
+      const { url } = await api.illustrate(text, lang);
+      setImageUrl(mediaUrl(url));
+    } catch {
+      /* image is a bonus; ignore failures */
+    } finally {
+      setIllustrating(false);
+    }
+  };
+
   const stopAndProcess = async () => {
+    clearMeter();
     setPhase("processing");
     try {
       await recorder.stop();
@@ -108,6 +160,7 @@ export default function Home() {
       }
       const r = await api.consult(text.trim(), lang);
       setReading(r);
+      runIllustration(r.answer); // fire-and-forget, shows under the transcript
       const { url } = await api.speak(r.answer, lang);
       const full = mediaUrl(url);
       setAudioUrl(full);
@@ -146,6 +199,8 @@ export default function Home() {
     audio.stop();
     setReading(null);
     setAudioUrl(null);
+    setImageUrl(null);
+    setIllustrating(false);
     setPhase("idle");
   };
 
@@ -214,6 +269,21 @@ export default function Home() {
             <View style={styles.divider} />
             <Txt font="bodyBold" style={styles.qLabel}>{t("oracle_answer")}</Txt>
             <Txt font="displayMedium" style={styles.answer}>{reading.answer}</Txt>
+
+            {/* Vision — an image describing the whole reading */}
+            {(illustrating || imageUrl) && (
+              <View style={styles.visionBlock}>
+                <Txt font="bodyBold" style={styles.qLabel}>{t("vision_label")}</Txt>
+                {imageUrl ? (
+                  <Image testID="vision-image" source={{ uri: imageUrl }} style={styles.vision} contentFit="cover" transition={400} />
+                ) : (
+                  <View style={[styles.vision, styles.visionLoading]}>
+                    <Ionicons name="sparkles" size={22} color={COLORS.goldSoft} />
+                    <Txt font="body" style={styles.visionTxt}>{t("envisioning")}</Txt>
+                  </View>
+                )}
+              </View>
+            )}
           </ScrollView>
 
           <View style={styles.sheetActions}>
@@ -266,6 +336,10 @@ const styles = StyleSheet.create({
   qText: { color: COLORS.onSurface2, fontSize: 15, lineHeight: 21 },
   divider: { height: 1, backgroundColor: COLORS.divider, marginVertical: SPACING.lg },
   answer: { color: COLORS.onSurface, fontSize: 21, lineHeight: 31 },
+  visionBlock: { marginTop: SPACING.lg, gap: SPACING.sm },
+  vision: { width: "100%", height: 220, borderRadius: RADIUS.lg, backgroundColor: COLORS.surface3, borderWidth: 1, borderColor: COLORS.glassLine },
+  visionLoading: { alignItems: "center", justifyContent: "center", gap: SPACING.sm },
+  visionTxt: { color: COLORS.onSurface3, fontSize: 13 },
   sheetActions: { flexDirection: "row", gap: SPACING.md, marginTop: SPACING.lg },
   actionBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: SPACING.sm,

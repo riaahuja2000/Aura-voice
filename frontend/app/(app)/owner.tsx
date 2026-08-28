@@ -13,6 +13,7 @@ import { useFocusEffect } from "expo-router";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { COLORS, RADIUS, SPACING } from "@/theme";
 import { useI18n } from "@/src/i18n";
 import { api, mediaUrl } from "@/src/api";
@@ -24,13 +25,20 @@ const SPEEDS = [0.85, 0.95, 1.0, 1.15];
 const DOW = ["M", "T", "W", "T", "F", "S", "S"];
 
 export default function Owner() {
-  const { t, topicLabel } = useI18n();
+  const { t, topicLabel, lang } = useI18n();
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const { settings, refresh: refreshSettings, set: setSettings } = useSettings();
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // knowledge
+  const [kb, setKb] = useState<any>(null);
+  const [kTopic, setKTopic] = useState("tarot");
+  const [kText, setKText] = useState("");
+  const [addingK, setAddingK] = useState(false);
+  const [uploadingKb, setUploadingKb] = useState(false);
 
   // branding form
   const [appName, setAppName] = useState(settings.app_name);
@@ -48,14 +56,59 @@ export default function Owner() {
 
   const load = useCallback(async () => {
     try {
-      const d = await api.ownerOverview();
+      const [d, k] = await Promise.all([api.ownerOverview(), api.knowledge()]);
       setData(d);
+      setKb(k);
     } catch (e: any) {
       toast.show(e?.message || t("try_again"), "error");
     } finally {
       setLoading(false);
     }
   }, [t, toast]);
+
+  const addKnowledge = async () => {
+    if (kText.trim().length < 8) {
+      toast.show(t("answer_text"), "error");
+      return;
+    }
+    setAddingK(true);
+    try {
+      await api.addKnowledge(kTopic, lang, kText.trim());
+      setKText("");
+      toast.show(t("entry_added"), "success");
+      const k = await api.knowledge();
+      setKb(k);
+    } catch (e: any) {
+      toast.show(e?.message || t("try_again"), "error");
+    } finally {
+      setAddingK(false);
+    }
+  };
+
+  const deleteKnowledge = async (id: string) => {
+    try {
+      await api.deleteKnowledge(id);
+      setKb(await api.knowledge());
+    } catch (e: any) {
+      toast.show(e?.message || t("try_again"), "error");
+    }
+  };
+
+  const uploadKb = async () => {
+    const res = await DocumentPicker.getDocumentAsync({ type: "*/*", copyToCacheDirectory: true });
+    if (res.canceled || !res.assets?.[0]) return;
+    const a = res.assets[0];
+    setUploadingKb(true);
+    try {
+      await api.uploadKnowledge(a.uri, a.name || "knowledge.bin", a.mimeType || "application/octet-stream");
+      toast.show(t("kb_uploaded"), "success");
+      setKb(await api.knowledge());
+    } catch (e: any) {
+      toast.show(e?.message || t("try_again"), "error");
+    } finally {
+      setUploadingKb(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -307,6 +360,53 @@ export default function Owner() {
 
             <Btn testID="brand-save" label={t("save_publish")} loading={savingBrand} onPress={saveBranding} style={{ marginTop: SPACING.md }} />
           </View>
+
+          {/* Knowledge — deeper traditions */}
+          <View style={styles.block}>
+            <Txt font="bodyBold" style={styles.blockLabel}>{t("knowledge")}</Txt>
+
+            <Txt font="bodyMedium" style={styles.fieldLabel}>{t("select_tradition")}</Txt>
+            <View style={styles.chipsWrap}>
+              {(kb?.topics || []).map((tp: string) => (
+                <Pressable key={tp} onPress={() => setKTopic(tp)} style={[styles.selectChip, kTopic === tp && styles.selectChipOn]}>
+                  <Txt font="bodyMedium" style={[styles.selectChipTxt, kTopic === tp && { color: COLORS.onGold }]}>{topicLabel(tp)}</Txt>
+                </Pressable>
+              ))}
+            </View>
+
+            <Txt font="bodyMedium" style={[styles.fieldLabel, { marginTop: SPACING.sm }]}>{t("answer_text")}</Txt>
+            <Field testID="kb-text" value={kText} onChangeText={setKText} placeholder={t("answer_text")} multiline style={{ height: 80, textAlignVertical: "top", paddingTop: 6 }} />
+            <Btn testID="kb-add" icon="plus" label={t("add_answer")} loading={addingK} onPress={addKnowledge} variant="outline" />
+
+            <Btn testID="kb-upload" icon="upload" label={uploadingKb ? t("upload_kb") : t("upload_kb")} loading={uploadingKb} onPress={uploadKb} variant="outline" style={{ marginTop: SPACING.sm }} />
+
+            {(kb?.entries || []).length > 0 && (
+              <>
+                <Txt font="bodyMedium" style={[styles.fieldLabel, { marginTop: SPACING.md }]}>{t("custom_answers")}</Txt>
+                {(kb.entries || []).slice(0, 30).map((e: any) => (
+                  <View key={e.id} style={styles.kbRow} testID={`kb-entry-${e.id}`}>
+                    <View style={styles.kbTag}><Txt font="bodyMedium" style={styles.kbTagTxt}>{topicLabel(e.topic)} · {e.lang}</Txt></View>
+                    <Txt font="body" style={styles.kbText} numberOfLines={2}>{e.text}</Txt>
+                    <Pressable testID={`kb-del-${e.id}`} onPress={() => deleteKnowledge(e.id)} style={styles.kbDel}>
+                      <Feather name="trash-2" size={15} color={COLORS.error} />
+                    </Pressable>
+                  </View>
+                ))}
+              </>
+            )}
+
+            {(kb?.files || []).length > 0 && (
+              <>
+                <Txt font="bodyMedium" style={[styles.fieldLabel, { marginTop: SPACING.md }]}>{t("kb_files_label")}</Txt>
+                {(kb.files || []).map((f: any) => (
+                  <View key={f.id} style={styles.kbRow}>
+                    <Feather name="file-text" size={15} color={COLORS.gold} />
+                    <Txt font="body" style={styles.kbText} numberOfLines={1}>{f.name}</Txt>
+                  </View>
+                ))}
+              </>
+            )}
+          </View>
         </ScrollView>
       )}
 
@@ -420,6 +520,11 @@ const styles = StyleSheet.create({
   selectChip: { backgroundColor: COLORS.surface3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: SPACING.md, paddingVertical: 7 },
   selectChipOn: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
   selectChipTxt: { color: COLORS.onSurface3, fontSize: 12 },
+  kbRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm, paddingVertical: SPACING.sm, borderTopWidth: 1, borderTopColor: COLORS.divider },
+  kbTag: { backgroundColor: COLORS.pinkDeep, borderRadius: RADIUS.sm, paddingHorizontal: 8, paddingVertical: 3 },
+  kbTagTxt: { color: COLORS.goldSoft, fontSize: 10 },
+  kbText: { flex: 1, color: COLORS.onSurface3, fontSize: 12 },
+  kbDel: { padding: 6 },
   modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", alignItems: "center", justifyContent: "center", padding: SPACING.xl },
   modalCard: { width: "100%", backgroundColor: COLORS.surface2, borderRadius: RADIUS.lg, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.glassLine },
   modalTitle: { color: COLORS.onSurface, fontSize: 22 },

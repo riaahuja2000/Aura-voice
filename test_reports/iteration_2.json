@@ -1,0 +1,41 @@
+{
+  "summary": "Round 2 regression + new-feature pass for VELORA. Backend: 44/44 pytest tests green (23 regression + 21 new). New tests validate the full image pipeline (POST /api/oracle/illustrate -> {url}; GET /api/img/{key}.png returns image/png > 10KB; verified ~real Gemini image), ELI5 consult (short answers, off-topic never surfaces 'general', primary topic routed to aura/mindfulness), per-user voice+speed (PATCH /api/me persists voice='coral' speed=1.15; GET /api/auth/me reflects; speed clamped to [0.5,2.0]), STT (synthesize with /speak, feed mp3 back to /transcribe -> non-empty {text}), daily reading (returns {date,text}, stable per user+day, auth-required), and owner Knowledge (RBAC: 403 for customer on GET/POST/DELETE/upload; owner GET returns topics/base_counts/custom_counts/entries/files with no 'general'; POST adds; DELETE soft-deletes; POST /upload accepts arbitrary formats and stores; JSON matching schema ingests entries -> ingested count = 2). Frontend smoke (viewport 390x844): customer login OK, home tab labeled 'Occult' (Oracle text absent), 'Tap to speak' shown, mic orb rendered, NO ask-input textbox. Account screen shows 'Occult voice' with chips shimmer/coral/nova/sage/fable/alloy/echo/onyx/ash and 'Speaking speed' with 0.85x/0.95x/1x/1.15x; selection interactions succeed. Owner Console shows Knowledge (kb-text/kb-add/kb-upload testIDs present) and members/branding/analytics sections. Journal tab remains hidden for owner (RBAC-consistent). No red-screen error. Only the previously-known pointerEvents deprecation warning in console.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Owner Console -> Most Asked", "issues": ["Legacy readings created before the general-topic filter still contribute a 'General' chip in the Most Asked aggregation (seen: 'General 1'). New /consult already excludes 'general' from topics; consider filtering 'general' out in owner_overview aggregation as well, or backfilling historical readings, so the owner UI never surfaces 'general'."]}
+    ],
+    "react_native_issues": [
+      {"component": "console-warning", "issue": "React Native web warning `props.pointerEvents is deprecated. Use style.pointerEvents` still present. Likely from a third-party (router/animation) component; non-blocking."}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_new_features.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/pytest_new_features.xml"
+  ],
+  "action_items": [
+    "Optional: In server.owner_overview, drop 'general' from topic_counts (or backfill readings.topics) so the 'General 1' chip disappears from Most Asked.",
+    "Optional: Trace `props.pointerEvents is deprecated` warning source and migrate to style.pointerEvents."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now ~795 lines. Split into routers (auth / oracle / owner / knowledge / branding) to stay under the 700-line guideline.",
+    "In-memory caches (_tts_cache, _img_cache) do not survive backend restarts; /api/tts/{key}.mp3 and /api/img/{key}.png then return 404 until regenerated. Acceptable for UX (client will replay), but worth documenting.",
+    "Object-storage init errors are swallowed at startup; owner branding/knowledge uploads will fail late. A /health/storage endpoint would surface storage state to ops.",
+    "oracle.PACK is mutated at import time (ELI5 override replaces base entries). Any hot reload or future in-place PACK edits become order-dependent. Consider a build-time compose or explicit merge function.",
+    "TTS/Image caches use unbounded LRU-ish trimming (`list(...)[:50]`) which is O(n); fine at current sizes but replace with functools.lru_cache or an OrderedDict if scale grows.",
+    "backend_test.py hardcodes a fallback BASE_URL. Prefer failing fast if EXPO_PUBLIC_BACKEND_URL is missing per env-var policy."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_new_features.py"
+  ],
+  "success_rate": {"backend": "100% (44/44)", "frontend": "100% of smoke-tested flows"},
+  "seed_data_creation": "New tests create ephemeral TEST_-prefixed customers and knowledge entries; entries are soft-deleted at end of the flow they exercise. Two entries persisted via the JSON-upload ingest test remain (topic='tarot', lang='en') as owner-added answers.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend URL env key is EXPO_PUBLIC_BACKEND_URL. Owner tabs = Occult/Owner/Account, Customer tabs = Occult/Account (Journal is hidden here). testIDs: login-email/password/submit, tab-account/tab-owner, voice-{name} (shimmer|coral|nova|sage|fable|alloy|echo|onyx|ash), speed-{value} (0.85|0.95|1|1.15), kb-text, kb-add, kb-upload, topic-{slug} (present but empty in current DOM parse; verify chips render on interaction). Note: the mic orb is voice-only in browser preview (headless has no mic) - do NOT try to record audio; test STT via /api/oracle/transcribe with a synthesized clip from /api/oracle/speak. Image endpoint responds in ~5-8s and returns a real PNG > 500KB.",
+  "rca_of_issue": "Not applicable — no bugs found this round. The 'General' chip in owner Most Asked is a legacy-data artifact (readings created before general-topic filter), not a live regression."
+}
