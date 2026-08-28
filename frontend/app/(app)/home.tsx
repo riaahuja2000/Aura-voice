@@ -41,8 +41,6 @@ export default function Home() {
   const [illustrating, setIllustrating] = useState(false);
 
   const meterTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastLoud = useRef<number>(0);
-  const startedAt = useRef<number>(0);
 
   const orbState: OrbState =
     phase === "listening" ? "listening" : phase === "processing" ? "processing" : audio.playing || audio.loading ? "speaking" : "idle";
@@ -96,28 +94,7 @@ export default function Home() {
       setReading(null);
       setImageUrl(null);
       setPhase("listening");
-      startedAt.current = Date.now();
-      lastLoud.current = Date.now();
-      clearMeter();
-      // Auto-listen: end automatically after a short pause in speech.
-      meterTimer.current = setInterval(() => {
-        try {
-          const st: any = recorder.getStatus ? recorder.getStatus() : null;
-          const m = st && typeof st.metering === "number" ? st.metering : null;
-          const now = Date.now();
-          if (m !== null && !Number.isNaN(m) && m > -35) lastLoud.current = now;
-          const elapsed = now - startedAt.current;
-          if (elapsed > 1200 && now - lastLoud.current > 1600) {
-            clearMeter();
-            stopAndProcess();
-          } else if (elapsed > 20000) {
-            clearMeter();
-            stopAndProcess();
-          }
-        } catch {
-          /* metering unavailable (e.g. web) — rely on manual tap */
-        }
-      }, 300);
+      // Recording continues with no time limit — it stops only when the user taps the orb again.
     } catch {
       toast.show(t("try_again"), "error");
       setPhase("idle");
@@ -238,7 +215,7 @@ export default function Home() {
           {!reading ? (
             <Animated.View entering={FadeIn}>
               <Txt font="body" style={styles.hint}>
-                {phase === "listening" ? "" : t("speak_hint")}
+                {phase === "listening" ? t("auto_hint") : t("speak_hint")}
               </Txt>
             </Animated.View>
           ) : orbState === "speaking" ? (

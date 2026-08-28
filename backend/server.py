@@ -21,6 +21,8 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from dotenv import load_dotenv
 
 import oracle
+import numerology
+import tarot
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
@@ -170,6 +172,15 @@ class KnowledgeBody(BaseModel):
     topic: str
     lang: Literal["en", "hi", "hng"]
     text: str = Field(min_length=8)
+
+
+class NumerologyBody(BaseModel):
+    full_name: str = Field(default="", max_length=120)
+    dob: str  # YYYY-MM-DD
+
+
+class TarotBody(BaseModel):
+    spread: Literal["single", "three", "situation", "five"] = "three"
 
 
 class SettingsBody(BaseModel):
@@ -551,6 +562,26 @@ async def my_readings(user: dict = Depends(get_current_user)):
     for r in rows:
         r.pop("_id", None)
     return rows
+
+
+# ---------------------------------------------------------------- numerology engine
+@api.post("/numerology/reading")
+async def numerology_reading(body: NumerologyBody, user: dict = Depends(get_current_user)):
+    try:
+        return numerology.reading(body.full_name, body.dob)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# ---------------------------------------------------------------- tarot engine
+@api.get("/tarot/deck")
+async def tarot_deck(user: dict = Depends(get_current_user)):
+    return {"count": len(tarot.DECK), "spreads": list(tarot.SPREADS.keys()), "cards": tarot.DECK}
+
+
+@api.post("/tarot/draw")
+async def tarot_draw(body: TarotBody, user: dict = Depends(get_current_user)):
+    return tarot.draw(body.spread)
 
 
 # ---------------------------------------------------------------- settings (branding)

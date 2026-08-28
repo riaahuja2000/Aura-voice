@@ -1,0 +1,44 @@
+{
+  "summary": "Retest of the numerology 500 fix + normalisation of empty-name to 400. Both fixes confirmed. Full suite: 20/21 pytest tests pass. Numerology bug fix verified end-to-end: POST /api/numerology/reading with full_name='K K' dob='1990-01-01' -> 200 (was 500), full_name='AEI OU' dob='1990-01-01' -> 200 (no-consonants also safe), full_name='' -> 400 with body {\"detail\":\"Please provide the full birth name\"} (was 422), full_name='   ' -> 400, valid 'Ria Ahuja' 2000-11-29 -> 200 with life_path=6, expression=33 (master preserved), birthday=11 (master preserved). Tarot regression fully green: /api/tarot/deck count=78 (22 Major + 4x14 Minor, unique ids, all cards have upright/reversed/keywords), /api/tarot/draw returns 1/3/3/5 unique cards for single/three/situation/five, orientation matches source-card meaning, unauth -> 401, invalid spread -> 422. Regression: /oracle/consult still emits no 'general' topic and short ELI5 answers; /owner/overview 403 for customer / 200 for owner. The one failing test (test_illustrate_png) is NOT a code regression — it fails because the Emergent LLM key budget is exceeded (429 'Budget has been exceeded! ... Max budget: 0.4' surfaces as 502 from the edge). Root fix change confirmed in code: numerology._entry now falls back to number=9 when the sum is 0, and NumerologyBody.full_name dropped min_length so empty strings reach the engine ValueError -> 400 path. Minor internal inconsistency noticed (see below).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/numerology/reading",
+        "issue": "For names without vowels or consonants, response.numbers.soul_urge (or personality) is still 0 while chart[key].number falls back to 9. The two fields disagree. Example: full_name='K K' -> numbers.soul_urge=0 but chart.soul_urge.number=9 (title 'The Humanitarian'). Consider normalising numbers[key] to the same fallback (or dropping the entry) so numbers and chart stay in sync."
+      },
+      {
+        "endpoint": "POST /api/oracle/illustrate",
+        "issue": "Currently returns 502 at the edge (backend raises ChatError -> unhandled 500) because the Emergent LLM key budget is exceeded: 'Budget has been exceeded! Key=... Current cost: 0.4436, Max budget: 0.4'. Not a code bug for this iteration, but the endpoint should catch ChatError and return a friendly 502/503 with a message instead of a raw crash. Only relevant if the budget stays capped."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_numerology_tarot.py",
+    "/app/test_reports/pytest/pytest_numerology_tarot.xml"
+  ],
+  "action_items": [
+    "(Optional / minor) Align numbers[key] with the _entry() fallback so the numbers dict never contains 0 (either return 9 or omit the field for names missing vowels/consonants). Otherwise leave as-is — the bug fix is verified.",
+    "(External) Emergent LLM key budget is exhausted, breaking /oracle/illustrate. Bump the budget or handle ChatError to avoid Cloudflare 502s."
+  ],
+  "critical_code_review_comments": [
+    "numerology._entry() correctly guards against 0 via a fallback to entry 9; consider recording the fallback inside numbers[key] too for consistency with chart[key].number.",
+    "server.NumerologyBody now uses default='' (no min_length); the engine's ValueError('Please provide the full birth name') is caught and re-raised as HTTP 400, matching the review requirement.",
+    "server.py still ~828 lines — numerology/tarot routes could be moved to routes/ package to keep files under 700 lines (previously flagged)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_numerology_tarot.py"
+  ],
+  "success_rate": {"backend": "95% (20/21) — one failure is external LLM budget, not code", "frontend": "n/a (frontend testing skipped as requested)"},
+  "seed_data_creation": "None. All calls are read/compute-only against the numerology and tarot engines.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The numerology no-vowel/no-consonant 500 bug and the empty-name 422->400 normalisation are both fixed and covered by /app/backend/tests/test_numerology_tarot.py::TestNumerology. If /oracle/illustrate needs to be retested, note that the Emergent LLM key budget is currently capped at 0.4 and already exceeded (429 -> 502). Run with EXPO_PUBLIC_BACKEND_URL from /app/frontend/.env.",
+  "rca_of_issue": "Not applicable — the reported bug is fixed. RCA summary of the previous bug and fix: numerology._entry(0) hit KeyError because NUMBER_ESSENCE has no key 0; the fix added an explicit fallback (`if not e: num, e = 9, NUMBER_ESSENCE[9]`) inside _entry. Simultaneously, NumerologyBody.full_name lost min_length=1 so an empty string is no longer blocked by Pydantic (422) but instead reaches numerology.reading, which raises ValueError('Please provide the full birth name'); the FastAPI handler converts that to HTTP 400 with a friendly detail. Verified via pytest and direct curl against EXPO_PUBLIC_BACKEND_URL."
+}
