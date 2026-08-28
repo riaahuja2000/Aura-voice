@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -9,12 +9,12 @@ import { useAuth } from "@/src/auth";
 import { api } from "@/src/api";
 import { Btn, Field, Txt, useToast } from "@/src/ui";
 import { LangSwitcher } from "@/src/components/LangSwitcher";
+import { listVoices } from "@/src/speech";
 
-const VOICES = ["shimmer", "coral", "nova", "sage", "fable", "alloy", "echo", "onyx", "ash"];
 const SPEEDS = [0.85, 0.95, 1.0, 1.15];
 
 export default function Account() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user, setUser, logout } = useAuth();
   const toast = useToast();
   const router = useRouter();
@@ -22,8 +22,15 @@ export default function Account() {
 
   const [name, setName] = useState(user?.name || "");
   const [saving, setSaving] = useState(false);
-  const [voice, setVoice] = useState(user?.voice || "shimmer");
+  const [voice, setVoice] = useState(user?.voice || "");
   const [speed, setSpeed] = useState<number>(user?.speed || 0.95);
+  const [voices, setVoices] = useState<{ id: string; label: string }[]>([]);
+
+  useEffect(() => {
+    listVoices(lang).then((vs) =>
+      setVoices(vs.map((v) => ({ id: v.identifier, label: (v.name || v.identifier).replace(/^.*\./, "") }))),
+    );
+  }, [lang]);
 
   const saveVoice = async (v: string, s: number) => {
     setVoice(v);
@@ -118,11 +125,15 @@ export default function Account() {
         <View style={styles.section}>
           <Txt font="bodyBold" style={styles.sectionLabel}>{t("voice_label")}</Txt>
           <View style={styles.chips}>
-            {VOICES.map((v) => (
-              <Pressable key={v} testID={`voice-${v}`} onPress={() => saveVoice(v, speed)} style={[styles.chip, voice === v && styles.chipOn]}>
-                <Txt font="bodyMedium" style={[styles.chipTxt, voice === v && { color: COLORS.onGold }]}>{v}</Txt>
-              </Pressable>
-            ))}
+            {voices.length === 0 ? (
+              <Txt font="body" style={{ color: COLORS.muted, fontSize: 12 }}>{t("voice_label")}</Txt>
+            ) : (
+              voices.map((v) => (
+                <Pressable key={v.id} testID={`voice-${v.id}`} onPress={() => saveVoice(v.id, speed)} style={[styles.chip, voice === v.id && styles.chipOn]}>
+                  <Txt font="bodyMedium" style={[styles.chipTxt, voice === v.id && { color: COLORS.onGold }]}>{v.label}</Txt>
+                </Pressable>
+              ))
+            )}
           </View>
           <Txt font="bodyBold" style={[styles.sectionLabel, { marginTop: SPACING.md }]}>{t("speed_label")}</Txt>
           <View style={styles.chips}>

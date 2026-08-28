@@ -284,42 +284,9 @@ def _get_object(path: str) -> tuple[bytes, str]:
     return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
 
 
-# ---------------------------------------------------------------- TTS
-_tts_cache: dict[str, bytes] = {}
-
-
-def _tts_key(text: str, voice: str, speed: float) -> str:
-    return hashlib.sha256(f"{text}|{voice}|{speed}|tts-1|mp3".encode("utf-8")).hexdigest()
-
-
-async def _synthesize(text: str, voice: str, speed: float) -> str:
-    key = _tts_key(text, voice, speed)
-    if key in _tts_cache:
-        return key
-    from emergentintegrations.llm.openai import OpenAITextToSpeech
-    tts = OpenAITextToSpeech(api_key=EMERGENT_LLM_KEY)
-    clean = oracle.clean_for_tts(text)[:4000]
-    audio = await tts.generate_speech(text=clean, model="tts-1", voice=voice,
-                                      speed=float(speed), response_format="mp3")
-    _tts_cache[key] = audio
-    if len(_tts_cache) > 200:
-        for k in list(_tts_cache.keys())[:50]:
-            _tts_cache.pop(k, None)
-    return key
-
-
-async def _transcribe(path: str, lang: str) -> str:
-    from emergentintegrations.llm.openai import OpenAISpeechToText
-    stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
-    kwargs: dict = {"model": "whisper-1", "response_format": "json"}
-    if lang == "en":
-        kwargs["language"] = "en"
-    elif lang == "hi":
-        kwargs["language"] = "hi"
-    resp = await stt.transcribe(file=Path(path), **kwargs)
-    if isinstance(resp, str):
-        return resp.strip()
-    return (getattr(resp, "text", None) or str(resp)).strip()
+# ---------------------------------------------------------------- (no external AI)
+# This app uses ZERO AI inference credit. Speech-to-text and text-to-speech run
+# on the user's device (free); answers come only from the local knowledge engine.
 
 
 # ---------------------------------------------------------------- auth routes
@@ -401,35 +368,6 @@ async def update_me(body: ProfileBody, user: dict = Depends(get_current_user)):
 
 
 # ---------------------------------------------------------------- oracle
-@api.post("/oracle/transcribe")
-async def transcribe(file: UploadFile = File(...), lang: str = Form("en"), user: dict = Depends(get_current_user)):
-    if not EMERGENT_LLM_KEY:
-        raise HTTPException(503, "Voice input is unavailable.")
-    data = await file.read()
-    if not data:
-        raise HTTPException(400, "Empty recording.")
-    if len(data) > 25 * 1024 * 1024:
-        raise HTTPException(413, "Recording too long.")
-    suffix = Path(file.filename or "q.m4a").suffix.lower()
-    if suffix not in {".m4a", ".mp4", ".mp3", ".wav", ".webm", ".mpeg", ".mpga"}:
-        suffix = ".m4a"
-    fd, tmp = tempfile.mkstemp(suffix=suffix)
-    os.close(fd)
-    try:
-        with open(tmp, "wb") as f:
-            f.write(data)
-        text = await _transcribe(tmp, lang)
-    except Exception:
-        logger.exception("Transcription failed")
-        raise HTTPException(502, "Could not hear you clearly. Try again.")
-    finally:
-        try:
-            Path(tmp).unlink(missing_ok=True)
-        except Exception:
-            pass
-    return {"text": text}
-
-
 @api.post("/oracle/consult")
 async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
     question = (body.question or "").strip()[:800]
@@ -465,95 +403,6 @@ async def daily(lang: str = "en", user: dict = Depends(get_current_user)):
     day = datetime.now(timezone.utc).date().isoformat()
     text = oracle.daily_reading(f"{user['id']}:{day}:{lang}", lang)
     return {"date": day, "text": text}
-
-
-@api.post("/oracle/speak")
-async def speak(body: SpeakBody, user: dict = Depends(get_current_user)):
-    if not EMERGENT_LLM_KEY:
-        raise HTTPException(503, "Voice is unavailable.")
-    text = (body.text or "").strip()
-    if not text:
-        raise HTTPException(400, "Nothing to speak.")
-    settings = await db.settings.find_one({"_id": "app"}) or DEFAULT_SETTINGS
-    voice = user.get("voice") or settings.get("voice", "shimmer")
-    speed = float(user.get("speed") or settings.get("speed", 0.95))
-    try:
-        key = await _synthesize(text, voice, speed)
-    except Exception:
-        logger.exception("TTS failed")
-        raise HTTPException(502, "The occult voice faltered. Try again.")
-    return {"url": f"/api/tts/{key}.mp3"}
-
-
-@api.get("/tts/{key}.mp3")
-async def get_tts(key: str):
-    audio = _tts_cache.get(key)
-    if audio is None:
-        raise HTTPException(404, "Audio expired. Replay to regenerate.")
-    return Response(content=audio, media_type="audio/mpeg",
-                    headers={"Cache-Control": "public, max-age=31536000"})
-
-
-# ---------------------------------------------------------------- image (illustration)
-_img_cache: dict[str, bytes] = {}
-
-
-def _img_key(text: str) -> str:
-    return hashlib.sha256(f"img|{text}".encode("utf-8")).hexdigest()
-
-
-async def _illustrate(text: str) -> str:
-    import base64 as _b64
-    key = _img_key(text)
-    if key in _img_cache:
-        return key
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
-    prompt = (
-        "Create a single luxurious, symbolic mystical illustration that captures the whole meaning of this "
-        "oracle reading so a person can grasp it at a glance. Absolutely no text, letters, or words in the image. "
-        "Style: ethereal and painterly, deep midnight indigo and obsidian with regal gold and soft crystal-pink "
-        "luminescence, occult and aura motifs (moon phases, constellations, sacred geometry, crystals, gentle "
-        "energy light), elegant and high detail, serene and premium. The reading: " + text[:600]
-    )
-    chat = (
-        LlmChat(api_key=EMERGENT_LLM_KEY, session_id=uuid.uuid4().hex,
-                system_message="You are a master mystical illustrator.")
-        .with_model("gemini", "gemini-3.1-flash-image-preview")
-        .with_params(modalities=["image", "text"])
-    )
-    _, images = await chat.send_message_multimodal_response(UserMessage(text=prompt))
-    if not images:
-        raise RuntimeError("no image")
-    data = _b64.b64decode(images[0]["data"])
-    _img_cache[key] = data
-    if len(_img_cache) > 120:
-        for k in list(_img_cache.keys())[:40]:
-            _img_cache.pop(k, None)
-    return key
-
-
-@api.post("/oracle/illustrate")
-async def illustrate(body: SpeakBody, user: dict = Depends(get_current_user)):
-    if not EMERGENT_LLM_KEY:
-        raise HTTPException(503, "Imagery is unavailable.")
-    text = (body.text or "").strip()
-    if not text:
-        raise HTTPException(400, "Nothing to illustrate.")
-    try:
-        key = await _illustrate(text)
-    except Exception:
-        logger.exception("Illustration failed")
-        raise HTTPException(502, "The vision would not form. Try again.")
-    return {"url": f"/api/img/{key}.png"}
-
-
-@api.get("/img/{key}.png")
-async def get_img(key: str):
-    data = _img_cache.get(key)
-    if data is None:
-        raise HTTPException(404, "Image expired.")
-    return Response(content=data, media_type="image/png",
-                    headers={"Cache-Control": "public, max-age=31536000"})
 
 
 @api.get("/readings")

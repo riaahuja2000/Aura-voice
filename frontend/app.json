@@ -22,7 +22,10 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.emergent.mystiquevoicepro.fqjz1d",
-      "permissions": ["READ_MEDIA_IMAGES", "RECORD_AUDIO"]
+      "permissions": [
+        "READ_MEDIA_IMAGES",
+        "RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -43,13 +46,20 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Speak your question to the oracle."
+          "microphonePermission": "Speak your question to the occult."
         }
       ],
       [
         "expo-image-picker",
         {
           "photosPermission": "Upload your logo and background images."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Speak your question to the occult.",
+          "speechRecognitionPermission": "Turn your spoken question into text."
         }
       ]
     ],

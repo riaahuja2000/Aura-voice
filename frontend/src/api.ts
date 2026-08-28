@@ -91,10 +91,6 @@ export const api = {
   // oracle
   consult: (question: string, lang: Lang) =>
     req<Reading>("/oracle/consult", { method: "POST", body: { question, lang } }),
-  speak: (text: string, lang: Lang) =>
-    req<{ url: string }>("/oracle/speak", { method: "POST", body: { text, lang } }),
-  illustrate: (text: string, lang: Lang) =>
-    req<{ url: string }>("/oracle/illustrate", { method: "POST", body: { text, lang } }),
   daily: (lang: Lang) => req<{ date: string; text: string }>(`/oracle/daily?lang=${lang}`),
   readings: () => req<Reading[]>("/readings"),
 
@@ -120,27 +116,6 @@ export const api = {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data && data.detail) || "Upload failed");
-    return data;
-  },
-
-  async transcribe(uri: string, lang: Lang, name: string, type: string): Promise<{ text: string }> {
-    const token = await getToken();
-    const form = new FormData();
-    form.append("lang", lang);
-    if (typeof window !== "undefined" && (window as any).document) {
-      const blob = await (await fetch(uri)).blob();
-      form.append("file", blob, name);
-    } else {
-      // @ts-ignore native multipart shape
-      form.append("file", { uri, name, type });
-    }
-    const res = await fetch(`${BASE}/api/oracle/transcribe`, {
-      method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: form,
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error((data && data.detail) || "Could not hear you");
     return data;
   },
 
