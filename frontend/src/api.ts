@@ -1,8 +1,12 @@
 import { storage } from "@/src/utils/storage";
 
-// Accepts a full URL (preview) or a bare host (Render blueprint fromService) and
-// normalises to an https base. No trailing /api.
-const RAW_BASE = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/+$/, "");
+// URL strategy for Vercel single-origin deploy:
+//   - If EXPO_PUBLIC_BACKEND_URL is EMPTY (recommended for Vercel), all fetches
+//     go to the same origin at `/api/...` \u2014 Vercel routes those to the Python
+//     serverless function (see vercel.json).
+//   - If EXPO_PUBLIC_BACKEND_URL is a full URL (dev / preview / split-origin
+//     deploy), fetches go there. Trailing slashes are trimmed.
+const RAW_BASE = (process.env.EXPO_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
 const BASE = RAW_BASE ? (RAW_BASE.startsWith("http") ? RAW_BASE : `https://${RAW_BASE}`) : "";
 export const TOKEN_KEY = "velora_token";
 

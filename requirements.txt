@@ -1,0 +1,4 @@
+# Root requirements.txt — used by Vercel's @vercel/python runtime.
+# Mirrors backend/requirements.txt so Vercel can install all deps at the repo root.
+-r backend/requirements.txt
+emergentintegrations --extra-index-url https://d33sy5i8bnduwe.cloudfront.net/simple/
