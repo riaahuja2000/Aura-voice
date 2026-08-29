@@ -381,49 +381,48 @@ async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
         raise HTTPException(400, "Please share your question.")
     topics = oracle.detect_topics(question)
 
-# OWNER KNOWLEDGE HAS FIRST PRIORITY.
-# If a matching owner-fed answer exists, return it EXACTLY.
-normalized_topics = [str(t).strip().lower() for t in topics]
+        # OWNER KNOWLEDGE HAS FIRST PRIORITY.
+    # If a matching owner-fed answer exists, return it EXACTLY.
+    normalized_topics = [str(t).strip().lower() for t in topics]
 
-matched_entries = []
-cursor = db.knowledge_entries.find({"lang": body.lang})
+    matched_entries = []
+    cursor = db.knowledge_entries.find({"lang": body.lang})
 
-async for entry in cursor:
-    entry_topic = str(entry.get("topic", "")).strip().lower()
-    entry_text = str(entry.get("text", "")).strip()
+    async for entry in cursor:
+        entry_topic = str(entry.get("topic", "")).strip().lower()
+        entry_text = str(entry.get("text", "")).strip()
 
-    if entry_topic in normalized_topics and entry_text:
-        matched_entries.append(entry)
+        if entry_topic in normalized_topics and entry_text:
+            matched_entries.append(entry)
 
-if matched_entries:
-    # Follow the same topic priority detected for the question.
-    topic_priority = {
-        topic: index for index, topic in enumerate(normalized_topics)
-    }
+    if matched_entries:
+        topic_priority = {
+            topic: index for index, topic in enumerate(normalized_topics)
+        }
 
-    matched_entries.sort(
-        key=lambda entry: topic_priority.get(
-            str(entry.get("topic", "")).strip().lower(),
-            999
+        matched_entries.sort(
+            key=lambda entry: topic_priority.get(
+                str(entry.get("topic", "")).strip().lower(),
+                999
+            )
         )
-    )
 
-    chosen = matched_entries[0]
+        chosen = matched_entries[0]
 
-    result = {
-        "answer": chosen["text"],   # EXACT owner-fed text. NO rewriting.
-        "topics": topics,
-        "primary": chosen.get("topic") or (topics[0] if topics else "General"),
-    }
+        result = {
+            "answer": chosen["text"],
+            "topics": topics,
+            "primary": chosen.get("topic") or (topics[0] if topics else "General"),
+        }
 
-else:
-    # Only use built-in Oracle when no owner knowledge matches.
-    result = oracle.compose_answer(
-        question,
-        body.lang,
-        topics,
-        {}
-    )
+    else:
+        result = oracle.compose_answer(
+            question,
+            body.lang,
+            topics,
+            {}
+        )
+
     now = datetime.now(timezone.utc).isoformat()
     reading = {
         "id": str(uuid.uuid4()),
@@ -435,6 +434,7 @@ else:
         "lang": body.lang,
         "created_at": now,
     }
+
     await db.readings.insert_one(dict(reading))
     reading.pop("_id", None)
     return reading
