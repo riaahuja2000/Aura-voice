@@ -380,12 +380,50 @@ async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
     if not question:
         raise HTTPException(400, "Please share your question.")
     topics = oracle.detect_topics(question)
-    # merge owner-added answers for the detected topics + language
-    extra_by_topic: dict[str, list[str]] = {}
-    cursor = db.knowledge_entries.find({"lang": body.lang, "topic": {"$in": topics}, "deleted_at": None})
-    async for e in cursor:
-        extra_by_topic.setdefault(e["topic"], []).append(e["text"])
-    result = oracle.compose_answer(question, body.lang, extra_by_topic)
+
+# OWNER KNOWLEDGE HAS FIRST PRIORITY.
+# If a matching owner-fed answer exists, return it EXACTLY.
+normalized_topics = [str(t).strip().lower() for t in topics]
+
+matched_entries = []
+cursor = db.knowledge_entries.find({"lang": body.lang})
+
+async for entry in cursor:
+    entry_topic = str(entry.get("topic", "")).strip().lower()
+    entry_text = str(entry.get("text", "")).strip()
+
+    if entry_topic in normalized_topics and entry_text:
+        matched_entries.append(entry)
+
+if matched_entries:
+    # Follow the same topic priority detected for the question.
+    topic_priority = {
+        topic: index for index, topic in enumerate(normalized_topics)
+    }
+
+    matched_entries.sort(
+        key=lambda entry: topic_priority.get(
+            str(entry.get("topic", "")).strip().lower(),
+            999
+        )
+    )
+
+    chosen = matched_entries[0]
+
+    result = {
+        "answer": chosen["text"],   # EXACT owner-fed text. NO rewriting.
+        "topics": topics,
+        "primary": chosen.get("topic") or (topics[0] if topics else "General"),
+    }
+
+else:
+    # Only use built-in Oracle when no owner knowledge matches.
+    result = oracle.compose_answer(
+        question,
+        body.lang,
+        topics,
+        {}
+    )
     now = datetime.now(timezone.utc).isoformat()
     reading = {
         "id": str(uuid.uuid4()),
