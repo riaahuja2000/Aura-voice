@@ -400,95 +400,105 @@ def _relevant_knowledge_text(question: str, text: str) -> str:
     if not q or not raw:
         return ""
 
-    # Manually-added short answers should remain exact.
-
-
-    # Words that add little retrieval value.
-    stop = {
-        "the", "a", "an", "is", "are", "was", "were", "to", "of",
-        "and", "or", "in", "on", "for", "with", "my", "me", "i",
-        "meri", "mera", "mere", "mujhe", "hai", "hogi", "hoga",
-        "ka", "ki", "ke", "kab", "kya", "ko"
+    aliases = {
+        "shaadi": {"shaadi", "marriage", "wedding", "spouse", "partner", "matrimony"},
+        "marriage": {"shaadi", "marriage", "wedding", "spouse", "partner", "matrimony"},
+        "relationship": {"relationship", "relationships", "love", "romance", "partner", "spouse"},
+        "love": {"love", "relationship", "relationships", "romance", "partner"},
+        "timing": {"timing", "when", "period", "date", "month", "year", "time"},
+        "career": {"career", "job", "profession", "work", "business"},
+        "money": {"money", "finance", "financial", "wealth", "income"},
+        "health": {"health", "wellness", "body"},
     }
 
-    q_words = {
+    stop = {
+        "meri", "mera", "mere", "mujhe", "hai", "hogi", "hoga",
+        "kab", "kya", "ka", "ki", "ke", "ko", "main", "mein",
+        "the", "a", "an", "is", "are", "to", "of", "and", "or",
+        "in", "on", "for", "with", "my", "me", "i"
+    }
+
+    question_words = {
         w for w in re.findall(r"\w+", q, flags=re.UNICODE)
         if len(w) > 2 and w not in stop
     }
 
-    # Helpful Hinglish/English concept expansion.
-    concepts = {
-        "shaadi": {"shaadi", "marriage", "wedding", "spouse", "partner"},
-        "marriage": {"shaadi", "marriage", "wedding", "spouse", "partner"},
-        "love": {"love", "relationship", "romance", "partner", "shaadi"},
-        "relationship": {"relationship", "love", "romance", "partner"},
-        "timing": {"timing", "when", "period", "date", "month", "year", "kab"},
-        "career": {"career", "job", "work", "profession", "business"},
-        "money": {"money", "finance", "wealth", "income", "financial"},
-        "health": {"health", "body", "wellness"},
-    }
+    required_terms = set(question_words)
 
-    expanded = set(q_words)
+    for key, terms in aliases.items():
+        if key in q:
+            required_terms.update(terms)
 
-    for key, family in concepts.items():
-        if key in q or any(word in q for word in family):
-            expanded.update(family)
+    # Special handling for Hindi/Hinglish marriage questions.
+    if "shaadi" in q:
+        required_terms.update(
+            {"shaadi", "marriage", "wedding", "spouse", "partner", "matrimony"}
+        )
 
-    # Split document into actual contextual passages.
-    blocks = re.split(r"\n\s*\n|(?<=[.!?])\s+", raw)
-
-    junk_phrases = (
+    junk = (
         "world occult knowledge base",
-        "master reference",
         "velora intelligence library",
-        "knowledge base",
+        "master reference",
+        "current authoritative factual data",
+        "when required",
         "table of contents",
+        "knowledge base",
         "copyright",
+        "reference document",
+    )
+
+    blocks = re.split(
+        r"\n\s*\n|(?<=[.!?])\s+",
+        raw
     )
 
     ranked = []
 
     for block in blocks:
-        block = re.sub(r"\s+", " ", block).strip()
+        clean = re.sub(r"\s+", " ", block).strip()
 
-        if len(block) < 35:
+        if len(clean) < 25:
             continue
 
-        low = block.lower()
+        low = clean.lower()
 
-        # Ignore document titles / metadata.
-        if any(junk in low for junk in junk_phrases):
+        if any(x in low for x in junk):
             continue
 
-        words = set(re.findall(r"\w+", low, flags=re.UNICODE))
+        # CRITICAL:
+        # At least one genuine question-related term must appear.
+        matched_terms = [
+            term for term in required_terms
+            if term and term in low
+        ]
 
-        score = len(words & expanded) * 3
+        if not matched_terms:
+            continue
 
-        # Exact query concepts get extra weight.
-        for term in expanded:
-            if term in low:
-                score += 2
+        score = len(set(matched_terms)) * 10
 
-        ranked.append((score, block))
+        # Prefer passages containing several relevant concepts.
+        words = set(
+            re.findall(r"\w+", low, flags=re.UNICODE)
+        )
+        score += len(words & required_terms) * 3
 
-    ranked.sort(key=lambda x: x[0], reverse=True)
+        ranked.append((score, clean))
 
-    # Do NOT answer from unrelated uploaded material.
-    if not ranked or ranked[0][0] < 3:
+    if not ranked:
         return ""
 
-    best = []
+    ranked.sort(
+        key=lambda x: x[0],
+        reverse=True
+    )
 
-    for score, block in ranked[:3]:
-        if score < 3:
-            continue
-        if block not in best:
-            best.append(block)
+    best_score, best_text = ranked[0]
 
-    answer = " ".join(best).strip()
+    if best_score < 10:
+        return ""
 
-    # Keep voice output concise.
-    return answer[:1400]
+    return best_text[:1200]
 # ---------------------------------------------------------------- oracle
 @api.post("/oracle/consult")
 async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
