@@ -256,22 +256,34 @@ def _init_storage() -> Optional[str]:
     return _storage_key
 
 
-def _put_object(path: str, data: bytes, content_type: str) -> dict:
-    global _storage_key
-    key = _init_storage()
-    if not key:
-        raise RuntimeError("Storage unavailable")
-    resp = requests.put(f"{STORAGE_URL}/objects/{path}",
-                        headers={"X-Storage-Key": key, "Content-Type": content_type},
-                        data=data, timeout=120)
-    if resp.status_code == 503:
-        _storage_key = None
-        key = _init_storage()
-        resp = requests.put(f"{STORAGE_URL}/objects/{path}",
-                            headers={"X-Storage-Key": key, "Content-Type": content_type},
-                            data=data, timeout=120)
-    resp.raise_for_status()
-    return resp.json()
+def _put_object(path: str, data: bytes, content_type: str):
+    store_id = (os.getenv("BLOB_STORE_ID") or "").strip()
+    token = (os.getenv("BLOB_READ_WRITE_TOKEN") or "").strip()
+
+    if store_id.startswith("store_"):
+        store_id = store_id[6:]
+
+    if not store_id or not token:
+        raise RuntimeError("Vercel Blob storage is not configured")
+
+    response = requests.put(
+        "https://vercel.com/api/blob/",
+        params={"pathname": path},
+        headers={
+            "Authorization": f"Bearer {token}",
+            "x-vercel-blob-store-id": store_id,
+            "x-vercel-blob-access": "private",
+            "x-content-type": content_type or "application/octet-stream",
+            "x-api-version": "12",
+            "x-api-blob-request-id": f"{store_id}:{uuid.uuid4().hex}",
+            "x-api-blob-request-attempt": "0",
+        },
+        data=data,
+        timeout=60,
+    )
+
+    response.raise_for_status()
+    return response.json()
 
 
 def _get_object(path: str) -> tuple[bytes, str]:
@@ -285,9 +297,10 @@ def _get_object(path: str) -> tuple[bytes, str]:
 
 
 def _storage_ready() -> bool:
-    """Object storage is optional. When self-hosting without it, uploads are disabled
-    gracefully (everything else keeps working)."""
-    return bool(EMERGENT_LLM_KEY)
+    return bool(
+        os.getenv("BLOB_STORE_ID")
+        and os.getenv("BLOB_READ_WRITE_TOKEN")
+    )
 
 
 # ---------------------------------------------------------------- (no external AI)
