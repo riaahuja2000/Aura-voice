@@ -1,9 +1,9 @@
-// AURELIA — voice-only oracle home.
-// Zero on-screen text (except tiny icon-only controls). Pure voice loop:
-//   tap orb -> listen -> Claude Sonnet 4.6 -> speak the answer.
+// AURA-VOICE — the living oracle orb. Zero on-screen text (optional captions for accessibility).
+// Gestures: hold = speak · tap = pause/continue · double-tap = replay · swipe ↑ deeper
+// · swipe ↓ shorter · swipe → practical · swipe ← alternative · two-finger tap = whisper mode.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, {
   Easing,
   cancelAnimation,
@@ -13,16 +13,18 @@ import Animated, {
   withTiming,
   interpolate,
 } from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
 import { useI18n } from "@/src/i18n";
 import { useAuth } from "@/src/auth";
-import { api } from "@/src/api";
-import { speakText, stopSpeak, useSpeaking } from "@/src/speech";
+import { api, type Lang, type RefineDirection } from "@/src/api";
+import { pauseSpeak, resumeSpeak, speakText, stopSpeak, useSpeaking } from "@/src/speech";
 import { useVoiceSTT } from "@/src/voice-stt";
 import { ZodiacRing } from "@/src/components/ZodiacRing";
 
@@ -31,11 +33,11 @@ type ThemeKey = "nebula" | "aura" | "crescent";
 
 type Theme = {
   key: ThemeKey;
-  bg: [string, string, string];        // radial-ish backdrop
-  orb: [string, string, string];       // main orb gradient
-  ring: string;                        // outer ring stroke
-  glow: string;                        // outer glow color
-  accent: string;                      // small ui icons
+  bg: [string, string, string];
+  orb: [string, string, string];
+  ring: string;
+  glow: string;
+  accent: string;
 };
 
 const THEMES: Record<ThemeKey, Theme> = {
@@ -67,6 +69,27 @@ const THEMES: Record<ThemeKey, Theme> = {
 
 const THEME_ORDER: ThemeKey[] = ["nebula", "aura", "crescent"];
 
+const DISCLOSURE: Record<Lang, string> = {
+  en: "Welcome, seeker. You are speaking with an AI-generated voice guide. My readings are traditional interpretation and symbolic reflection, never guaranteed fact, and never a replacement for medical, legal or professional help. Hold the orb, and speak your question.",
+  hi: "स्वागत है। आप एक ए-आई द्वारा निर्मित वॉयस गाइड से बात कर रहे हैं। मेरे उत्तर पारंपरिक व्याख्या और प्रतीकात्मक चिंतन हैं, कभी भी निश्चित तथ्य नहीं, और कभी भी चिकित्सा या पेशेवर सलाह का विकल्प नहीं। गोले को दबाकर रखें और अपना प्रश्न बोलें।",
+  hng: "Swagat hai. Aap ek AI-generated voice guide se baat kar rahe hain. Mere jawab traditional vyakhya aur symbolic reflection hain, kabhi bhi guaranteed fact nahi, aur kabhi bhi medical ya professional salaah ka vikalp nahi. Orb ko hold karein aur apna sawaal bolein.",
+};
+
+const FAIL_LINE: Record<Lang, string> = {
+  en: "The stars are quiet, dear seeker. Please ask again in a moment.",
+  hi: "क्षमा करें, अभी सितारे मौन हैं। कृपया थोड़ी देर बाद पूछें।",
+  hng: "Kshama karein, abhi sitaare maun hain. Thodi der baad pooch lein.",
+};
+
+const NO_STT_LINE: Record<Lang, string> = {
+  en: "Voice recognition is not available on this device.",
+  hi: "इस डिवाइस पर आवाज़ पहचान उपलब्ध नहीं है।",
+  hng: "Is device par voice recognition available nahi hai.",
+};
+
+const DISCLOSURE_KEY = "aura_ai_disclosure_v1";
+const CAPTIONS_KEY = "aura_captions_on";
+
 // ------------------------------------------------------------------ ORB
 type OrbMode = "idle" | "listening" | "thinking" | "speaking";
 
@@ -77,7 +100,6 @@ function ReactiveOrb({ theme, mode, size = 260 }: { theme: Theme; mode: OrbMode;
   const wobble = useSharedValue(0);
 
   useEffect(() => {
-    // idle: gentle 4s breath; listening/speaking: quick 0.9s pulse; thinking: 1.6s
     const period =
       mode === "listening" ? 900 : mode === "speaking" ? 1100 : mode === "thinking" ? 1600 : 3800;
     cancelAnimation(pulse);
@@ -133,15 +155,10 @@ function ReactiveOrb({ theme, mode, size = 260 }: { theme: Theme; mode: OrbMode;
 
   return (
     <View style={[styles.orbWrap, { width: OUTER, height: OUTER }]} pointerEvents="none">
-      {/* Outer glow halo */}
       <Animated.View style={[styles.absCenter, { width: OUTER, height: OUTER, borderRadius: OUTER }, glowStyle]}>
-        <LinearGradient
-          colors={[theme.glow, "transparent"]}
-          style={{ flex: 1, borderRadius: OUTER }}
-        />
+        <LinearGradient colors={[theme.glow, "transparent"]} style={{ flex: 1, borderRadius: OUTER }} />
       </Animated.View>
 
-      {/* Slow rotating outer ring */}
       <Animated.View
         style={[
           styles.absCenter,
@@ -158,7 +175,6 @@ function ReactiveOrb({ theme, mode, size = 260 }: { theme: Theme; mode: OrbMode;
         ]}
       />
 
-      {/* Counter rotating inner ring */}
       <Animated.View
         style={[
           styles.absCenter,
@@ -174,7 +190,6 @@ function ReactiveOrb({ theme, mode, size = 260 }: { theme: Theme; mode: OrbMode;
         ]}
       />
 
-      {/* Wobbling core */}
       <Animated.View style={[styles.absCenter, wobbleStyle]}>
         <Animated.View style={[coreStyle, { width: size, height: size, borderRadius: size }]}>
           <LinearGradient
@@ -183,7 +198,6 @@ function ReactiveOrb({ theme, mode, size = 260 }: { theme: Theme; mode: OrbMode;
             end={{ x: 0.85, y: 0.9 }}
             style={{ flex: 1, borderRadius: size }}
           />
-          {/* highlight sheen */}
           <View
             style={{
               position: "absolute",
@@ -196,7 +210,6 @@ function ReactiveOrb({ theme, mode, size = 260 }: { theme: Theme; mode: OrbMode;
               transform: [{ rotate: "-20deg" }],
             }}
           />
-          {/* crescent overlay */}
           {isCrescent && (
             <View
               style={{
@@ -228,92 +241,259 @@ export default function VoiceHome() {
   const theme = THEMES[THEME_ORDER[themeIdx]];
 
   const [phase, setPhase] = useState<OrbMode>("idle");
-  const busyRef = useRef(false);
+  const [paused, setPaused] = useState(false);
+  const [whisper, setWhisper] = useState(false);
+  const [captions, setCaptions] = useState(false);
+  const [caption, setCaption] = useState<{ q: string; a: string } | null>(null);
 
+  const busyRef = useRef(false);
+  const holdRef = useRef(false);
+  const lastAnswerRef = useRef("");
+  const whisperRef = useRef(false);
+  whisperRef.current = whisper;
+
+  // -------- speech helper (respects whisper mode + captions)
+  const speak = useCallback(
+    (text: string, q = "") => {
+      setPaused(false);
+      setCaption({ q, a: text });
+      speakText(text, { lang, whisper: whisperRef.current });
+    },
+    [lang],
+  );
+
+  // -------- consult flow
   const onFinal = useCallback(
     async (transcript: string) => {
       if (busyRef.current) return;
       busyRef.current = true;
       setPhase("thinking");
+      setCaption({ q: transcript, a: "" });
       try {
         const r = await api.voiceConsult(transcript, lang);
+        lastAnswerRef.current = r.answer;
+        if (r.action === "rescue") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
         setPhase("speaking");
-        speakText(r.answer, { lang });
+        speak(r.answer, transcript);
       } catch (_e) {
         setPhase("idle");
-        // Speak a graceful failure message
-        speakText(
-          lang === "hi"
-            ? "क्षमा करें, अभी सितारे मौन हैं। कृपया थोड़ी देर बाद पूछें।"
-            : lang === "hng"
-              ? "Kshama karein, abhi sitaare maun hain. Thodi der baad pooch lein."
-              : "The stars are quiet, dear seeker. Please ask again in a moment.",
-          { lang },
-        );
+        speak(FAIL_LINE[lang]);
       } finally {
         busyRef.current = false;
       }
     },
-    [lang],
+    [lang, speak],
   );
 
   const stt = useVoiceSTT(lang, onFinal);
+  const sttRef = useRef(stt);
+  sttRef.current = stt;
 
-  // Sync phase with speaking status
+  // -------- first-launch spoken AI disclosure
   useEffect(() => {
-    if (speaking) setPhase("speaking");
-    else if (phase === "speaking") setPhase("idle");
-  }, [speaking, phase]);
+    (async () => {
+      try {
+        const [done, cap] = await Promise.all([
+          AsyncStorage.getItem(DISCLOSURE_KEY),
+          AsyncStorage.getItem(CAPTIONS_KEY),
+        ]);
+        if (cap === "1") setCaptions(true);
+        if (!done) {
+          await AsyncStorage.setItem(DISCLOSURE_KEY, "1");
+          setTimeout(() => speak(DISCLOSURE[lang]), 800);
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // -------- phase sync
+  useEffect(() => {
+    if (speaking && !paused) setPhase("speaking");
+    else if (!speaking && phase === "speaking" && !paused) setPhase("idle");
+  }, [speaking, paused, phase]);
 
   useEffect(() => {
     if (stt.listening) setPhase("listening");
     else if (phase === "listening") setPhase(busyRef.current ? "thinking" : "idle");
   }, [stt.listening, phase]);
 
-  const onOrbTap = useCallback(async () => {
+  // -------- gesture actions
+  const startListening = useCallback(async () => {
+    const s = sttRef.current;
+    if (busyRef.current || s.listening) return;
+    if (!s.available) {
+      speak(NO_STT_LINE[lang]);
+      return;
+    }
+    stopSpeak();
+    setPaused(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    // If speaking, tap silences the oracle
-    if (speaking) {
-      stopSpeak();
-      setPhase("idle");
-      return;
-    }
-    // Toggle listening
-    if (stt.listening) {
-      stt.stop();
-      return;
-    }
-    if (!stt.available) {
-      speakText(
-        lang === "hi"
-          ? "इस डिवाइस पर आवाज़ पहचान उपलब्ध नहीं है।"
-          : lang === "hng"
-            ? "Is device par voice recognition available nahi hai."
-            : "Voice recognition is not available on this device.",
-        { lang },
-      );
-      return;
-    }
     try {
-      // Small welcoming chime (spoken)
-      stopSpeak();
-      await stt.start();
-    } catch (_e) {
+      await s.start();
+    } catch {
       setPhase("idle");
     }
-  }, [speaking, stt, lang]);
+  }, [lang, speak]);
+
+  const stopListening = useCallback(() => {
+    const s = sttRef.current;
+    if (s.listening) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      s.stop();
+    }
+  }, []);
+
+  const onSingleTap = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {});
+    if (paused) {
+      // continue
+      if (!resumeSpeak()) {
+        // resume unsupported (Android) → replay from start
+        if (lastAnswerRef.current) speak(lastAnswerRef.current);
+      } else {
+        setPaused(false);
+        setPhase("speaking");
+      }
+      return;
+    }
+    if (speaking) {
+      // pause (barge-in)
+      if (Platform.OS !== "android" && pauseSpeak()) {
+        setPaused(true);
+        setPhase("idle");
+      } else {
+        stopSpeak();
+        setPaused(false);
+        setPhase("idle");
+      }
+      return;
+    }
+    if (sttRef.current.listening) {
+      stopListening();
+      return;
+    }
+    // idle → tap-to-talk convenience
+    startListening();
+  }, [paused, speaking, speak, startListening, stopListening]);
+
+  const onDoubleTap = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    if (lastAnswerRef.current) {
+      setPhase("speaking");
+      speak(lastAnswerRef.current);
+    }
+  }, [speak]);
+
+  const toggleWhisper = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    setWhisper((w) => !w);
+  }, []);
+
+  const doRefine = useCallback(
+    async (direction: RefineDirection) => {
+      if (busyRef.current) return;
+      busyRef.current = true;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      stopSpeak();
+      setPaused(false);
+      setPhase("thinking");
+      try {
+        const r = await api.voiceRefine(direction, lang);
+        lastAnswerRef.current = r.answer;
+        setPhase("speaking");
+        speak(r.answer, r.question || "");
+      } catch (_e) {
+        setPhase("idle");
+        speak(FAIL_LINE[lang]);
+      } finally {
+        busyRef.current = false;
+      }
+    },
+    [lang, speak],
+  );
+
+  const onSwipe = useCallback(
+    (dx: number, dy: number) => {
+      if (Math.abs(dy) >= Math.abs(dx)) {
+        doRefine(dy < 0 ? "deeper" : "shorter");
+      } else {
+        doRefine(dx > 0 ? "practical" : "alternative");
+      }
+    },
+    [doRefine],
+  );
+
+  // -------- gesture composition
+  const gestures = useMemo(() => {
+    const hold = Gesture.LongPress()
+      .minDuration(350)
+      .maxDistance(90)
+      .runOnJS(true)
+      .onStart(() => {
+        holdRef.current = true;
+        startListening();
+      })
+      .onFinalize(() => {
+        if (holdRef.current) {
+          holdRef.current = false;
+          stopListening();
+        }
+      });
+
+    const twoFinger = Gesture.Tap()
+      .minPointers(2)
+      .maxDuration(600)
+      .runOnJS(true)
+      .onEnd((_e, ok) => {
+        if (ok) toggleWhisper();
+      });
+
+    const doubleTap = Gesture.Tap()
+      .numberOfTaps(2)
+      .maxDuration(280)
+      .runOnJS(true)
+      .onEnd((_e, ok) => {
+        if (ok) onDoubleTap();
+      });
+
+    const singleTap = Gesture.Tap()
+      .numberOfTaps(1)
+      .maxDuration(280)
+      .runOnJS(true)
+      .onEnd((_e, ok) => {
+        if (ok) onSingleTap();
+      });
+
+    const pan = Gesture.Pan()
+      .minDistance(55)
+      .maxPointers(1)
+      .runOnJS(true)
+      .onEnd((e) => {
+        if (Math.abs(e.translationX) > 40 || Math.abs(e.translationY) > 40) {
+          onSwipe(e.translationX, e.translationY);
+        }
+      });
+
+    return Gesture.Race(pan, hold, Gesture.Exclusive(twoFinger, doubleTap, singleTap));
+  }, [startListening, stopListening, toggleWhisper, onDoubleTap, onSingleTap, onSwipe]);
 
   const cycleTheme = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
     setThemeIdx((i) => (i + 1) % THEME_ORDER.length);
   }, []);
 
-  const onLongPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
-    cycleTheme();
-  }, [cycleTheme]);
+  const toggleCaptions = useCallback(async () => {
+    Haptics.selectionAsync().catch(() => {});
+    setCaptions((c) => {
+      AsyncStorage.setItem(CAPTIONS_KEY, c ? "0" : "1").catch(() => {});
+      return !c;
+    });
+  }, []);
 
-  // ---------------- Ambient sparkles (tiny stars)
+  // ---------------- Ambient sparkles
   const stars = useMemo(
     () =>
       new Array(28).fill(0).map((_, i) => ({
@@ -326,23 +506,32 @@ export default function VoiceHome() {
     [themeIdx],
   );
 
+  const orbMode: OrbMode = paused ? "idle" : phase;
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg[0] }}>
       <LinearGradient colors={theme.bg} style={StyleSheet.absoluteFill} />
 
-      {/* Zodiac watermark rings */}
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }]}>
         <ZodiacRing size={520} color={theme.accent} opacity={0.08} duration={140000} />
         <ZodiacRing size={360} color={theme.accent} opacity={0.05} duration={95000} reverse />
       </View>
 
-      {/* Tiny stars */}
       {stars.map((s) => (
         <Twinkle key={`${themeIdx}-${s.id}`} top={s.top} left={s.left} size={s.size} delay={s.delay} accent={theme.accent} />
       ))}
 
-      {/* Top-right controls — icon only, no text */}
+      {/* Top-right controls — icon only */}
       <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
+        <Pressable
+          testID="captions-btn"
+          onPress={toggleCaptions}
+          style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.6 }, captions && styles.iconBtnOn]}
+          hitSlop={12}
+        >
+          <Ionicons name={captions ? "eye" : "eye-off-outline"} size={22} color={theme.accent} />
+        </Pressable>
+
         <Pressable
           testID="theme-btn"
           onPress={cycleTheme}
@@ -379,27 +568,46 @@ export default function VoiceHome() {
 
       {/* Center orb — the ENTIRE interaction */}
       <View style={styles.center}>
-        <Pressable
-          testID="orb-btn"
-          onPress={onOrbTap}
-          onLongPress={onLongPress}
-          delayLongPress={450}
-          hitSlop={20}
-        >
-          <ReactiveOrb theme={theme} mode={phase} size={260} />
-        </Pressable>
+        <GestureDetector gesture={gestures}>
+          <View testID="orb-btn" collapsable={false}>
+            <ReactiveOrb theme={theme} mode={orbMode} size={260} />
+          </View>
+        </GestureDetector>
 
-        {/* Status ring around orb — icon only */}
+        {/* Status row — icon only */}
         <View style={styles.statusRow} pointerEvents="none">
-          <StatusIcon mode={phase} accent={theme.accent} />
+          <StatusIcon mode={orbMode} paused={paused} accent={theme.accent} />
+          {whisper && (
+            <Ionicons name="moon" size={18} color={theme.accent} style={{ opacity: 0.8, marginLeft: 14 }} />
+          )}
         </View>
       </View>
+
+      {/* Optional accessibility captions */}
+      {captions && caption && (
+        <View style={[styles.captionsWrap, { paddingBottom: insets.bottom + 14 }]} pointerEvents="box-none">
+          <View style={styles.captionCard}>
+            <ScrollView style={{ maxHeight: 170 }} showsVerticalScrollIndicator={false}>
+              {!!caption.q && (
+                <Text style={[styles.captionQ, { color: theme.accent }]} testID="caption-question">
+                  {caption.q}
+                </Text>
+              )}
+              {!!caption.a && (
+                <Text style={styles.captionA} testID="caption-answer">
+                  {caption.a}
+                </Text>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
 
 // ---------------- small helpers ----------------
-function StatusIcon({ mode, accent }: { mode: OrbMode; accent: string }) {
+function StatusIcon({ mode, paused, accent }: { mode: OrbMode; paused: boolean; accent: string }) {
   const opacity = useSharedValue(0);
   useEffect(() => {
     opacity.value = withRepeat(
@@ -411,10 +619,11 @@ function StatusIcon({ mode, accent }: { mode: OrbMode; accent: string }) {
   const style = useAnimatedStyle(() => ({ opacity: interpolate(opacity.value, [0, 1], [0.35, 1]) }));
 
   let icon: keyof typeof Ionicons.glyphMap = "ellipse-outline";
-  if (mode === "listening") icon = "mic";
+  if (paused) icon = "pause";
+  else if (mode === "listening") icon = "mic";
   else if (mode === "thinking") icon = "sparkles";
   else if (mode === "speaking") icon = "volume-high";
-  else icon = "hand-left-outline"; // tap prompt
+  else icon = "hand-left-outline";
 
   return (
     <Animated.View style={style}>
@@ -499,6 +708,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
   },
+  iconBtnOn: {
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderColor: "rgba(255,255,255,0.30)",
+  },
   center: {
     flex: 1,
     alignItems: "center",
@@ -507,7 +720,35 @@ const styles = StyleSheet.create({
   statusRow: {
     marginTop: 34,
     height: 32,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+  },
+  captionsWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 18,
+    zIndex: 20,
+  },
+  captionCard: {
+    backgroundColor: "rgba(5,3,14,0.78)",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  captionQ: {
+    fontSize: 12,
+    opacity: 0.75,
+    marginBottom: 6,
+    fontStyle: "italic",
+  },
+  captionA: {
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 14,
+    lineHeight: 21,
   },
 });

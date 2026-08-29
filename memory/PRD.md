@@ -31,6 +31,24 @@ Premium mobile-first remake of an occult voice oracle (velora-occult-voice.base4
 - Brand assets: gold VELORA logo → app icon/splash/auth hero; pink crystal collage → hero backdrop.
 - Testing: 23/23 backend pytest green; frontend flows verified.
 
+## Implemented (2026-06 build 3 — "Living Oracle OS")
+- **Oracle Brain backend** (`backend/oracle_brain.py` + rewritten `/api/voice/consult`):
+  invisible engine router (tarot/astrology/numerology/aura/mindfulness/dream/ritual/crystals/palmistry/runes/iching/kabbalah/fengshui/general),
+  Context DNA memory (db.voice_turns, last 12 turns fed to Claude), one-breath clarification (MODE clarify, never twice in a row),
+  Oracle Council mode, tradition lock, reality mirror, uncertainty honesty, compassionate contradiction (repeated-question jaccard detection),
+  safety boundaries. Structured output: ENGINE/MODE/SPEAK parsed server-side.
+- **Spoken commands** (deterministic, multilingual EN/HI/HNG): "calm me now" (instant 30s rescue script, no LLM),
+  "save this moment" (db.voice_bookmarks), "play my guidance [about X]", "where did this answer come from" (source trail),
+  "challenge this answer", "forget this conversation" (clears voice_turns), "delete my voice history" (wipes readings+turns+bookmarks),
+  "don't remember personal details" (users.memory_opt_out).
+- **`POST /api/voice/refine`** {direction: deeper|shorter|practical|alternative|challenge|source} — refines last substantive reading.
+- **Gesture orb** (home.tsx): hold = push-to-talk · tap = pause/continue (barge-in; Android falls back to stop) ·
+  double-tap = replay · swipe ↑ deeper / ↓ shorter / → practical / ← alternative · two-finger tap = whisper mode (soft rate/pitch/volume, moon icon).
+- **Accessibility captions** (eye icon, persisted in AsyncStorage, default OFF = voice-only) + first-launch spoken AI disclosure.
+- **Owner Voice Oracle Log** (`GET /api/owner/voice-log` + owner.tsx section): transcripts w/ engine+mode badges, engine distribution,
+  failed/unclear question log (db.failed_questions), saved-moments count.
+- speech.ts: pauseSpeak/resumeSpeak (iOS/web) + whisper option.
+
 ## Backlog / Next
 - P1: Owner in-console live preview of branding before publish.
 - P2: Journal search/filter by topic; export a reading.

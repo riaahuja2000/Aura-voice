@@ -32,6 +32,7 @@ export default function Owner() {
   const { settings, refresh: refreshSettings, set: setSettings } = useSettings();
 
   const [data, setData] = useState<any>(null);
+  const [vlog, setVlog] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // knowledge
@@ -57,9 +58,10 @@ export default function Owner() {
 
   const load = useCallback(async () => {
     try {
-      const [d, k] = await Promise.all([api.ownerOverview(), api.knowledge()]);
+      const [d, k, v] = await Promise.all([api.ownerOverview(), api.knowledge(), api.voiceLog()]);
       setData(d);
       setKb(k);
+      setVlog(v);
     } catch (e: any) {
       toast.show(e?.message || t("try_again"), "error");
     } finally {
@@ -265,6 +267,71 @@ export default function Owner() {
                   </View>
                 ))}
               </View>
+            </View>
+          )}
+
+          {/* Voice oracle log — private transcripts of the voice-only experience */}
+          {vlog && (
+            <View style={styles.block} testID="voice-log-block">
+              <Txt font="bodyBold" style={styles.blockLabel}>Voice Oracle Log</Txt>
+
+              <View style={styles.chipsWrap}>
+                <View style={styles.topicChip}>
+                  <Txt font="bodyMedium" style={styles.topicChipTxt}>Sessions</Txt>
+                  <View style={styles.countPill}><Txt font="bodyBold" style={styles.countTxt}>{vlog.total ?? 0}</Txt></View>
+                </View>
+                <View style={styles.topicChip}>
+                  <Txt font="bodyMedium" style={styles.topicChipTxt}>Saved moments</Txt>
+                  <View style={styles.countPill}><Txt font="bodyBold" style={styles.countTxt}>{vlog.bookmarks ?? 0}</Txt></View>
+                </View>
+                <View style={styles.topicChip}>
+                  <Txt font="bodyMedium" style={styles.topicChipTxt}>Unclear / off-topic</Txt>
+                  <View style={styles.countPill}><Txt font="bodyBold" style={styles.countTxt}>{(vlog.failed || []).length}</Txt></View>
+                </View>
+              </View>
+
+              {(vlog.engines || []).length > 0 && (
+                <>
+                  <Txt font="bodyMedium" style={styles.fieldLabel}>Engines activated</Txt>
+                  <View style={styles.chipsWrap}>
+                    {vlog.engines.map((e: any) => (
+                      <View key={e.name} style={styles.topicChip}>
+                        <Txt font="bodyMedium" style={styles.topicChipTxt}>{e.name}</Txt>
+                        <View style={styles.countPill}><Txt font="bodyBold" style={styles.countTxt}>{e.count}</Txt></View>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {(vlog.readings || []).length > 0 && (
+                <>
+                  <Txt font="bodyMedium" style={[styles.fieldLabel, { marginTop: SPACING.sm }]}>Recent transcripts</Txt>
+                  {vlog.readings.slice(0, 12).map((r: any) => (
+                    <View key={r.id} style={styles.vlogRow}>
+                      <View style={styles.kbTag}>
+                        <Txt font="bodyMedium" style={styles.kbTagTxt}>{r.engine || "general"} · {r.mode || "answer"}</Txt>
+                      </View>
+                      <Txt font="bodyMedium" style={styles.vlogQ} numberOfLines={2}>{r.question}</Txt>
+                      <Txt font="body" style={styles.vlogA} numberOfLines={3}>{r.answer}</Txt>
+                      <Txt font="body" style={styles.vlogMeta}>{r.email} · {String(r.created_at || "").slice(0, 16).replace("T", " ")}</Txt>
+                    </View>
+                  ))}
+                </>
+              )}
+
+              {(vlog.failed || []).length > 0 && (
+                <>
+                  <Txt font="bodyMedium" style={[styles.fieldLabel, { marginTop: SPACING.sm }]}>Failed / unclear questions</Txt>
+                  {vlog.failed.slice(0, 8).map((f: any) => (
+                    <View key={f.id} style={styles.kbRow}>
+                      <Feather name={f.reason === "boundary" ? "slash" : "help-circle"} size={14} color={COLORS.warning} />
+                      <Txt font="body" style={styles.kbText} numberOfLines={2}>{f.question}</Txt>
+                      <Txt font="body" style={styles.vlogMeta}>{f.reason}</Txt>
+                    </View>
+                  ))}
+                </>
+              )}
             </View>
           )}
 
@@ -521,6 +588,10 @@ const styles = StyleSheet.create({
   selectChip: { backgroundColor: COLORS.surface3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: SPACING.md, paddingVertical: 7 },
   selectChipOn: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
   selectChipTxt: { color: COLORS.onSurface3, fontSize: 12 },
+  vlogRow: { paddingVertical: SPACING.sm, borderTopWidth: 1, borderTopColor: COLORS.divider, gap: 4, alignItems: "flex-start" },
+  vlogQ: { color: COLORS.onSurface, fontSize: 13 },
+  vlogA: { color: COLORS.onSurface3, fontSize: 12 },
+  vlogMeta: { color: COLORS.muted, fontSize: 10 },
   kbRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm, paddingVertical: SPACING.sm, borderTopWidth: 1, borderTopColor: COLORS.divider },
   kbTag: { backgroundColor: COLORS.pinkDeep, borderRadius: RADIUS.sm, paddingHorizontal: 8, paddingVertical: 3 },
   kbTagTxt: { color: COLORS.goldSoft, fontSize: 10 },

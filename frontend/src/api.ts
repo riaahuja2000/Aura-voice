@@ -35,6 +35,19 @@ export type Reading = {
   created_at: string;
 };
 
+export type RefineDirection = "deeper" | "shorter" | "practical" | "alternative" | "challenge" | "source";
+
+export type VoiceReading = {
+  id: string;
+  question: string;
+  answer: string;
+  lang: Lang;
+  engine: string;
+  mode: string;
+  action: string;
+  created_at: string;
+};
+
 export type Settings = {
   app_name: string;
   tagline: string;
@@ -99,10 +112,9 @@ export const api = {
   consult: (question: string, lang: Lang) =>
     req<Reading>("/oracle/consult", { method: "POST", body: { question, lang } }),
   voiceConsult: (question: string, lang: Lang) =>
-    req<{ id: string; question: string; answer: string; lang: Lang; created_at: string }>(
-      "/voice/consult",
-      { method: "POST", body: { question, lang } },
-    ),
+    req<VoiceReading>("/voice/consult", { method: "POST", body: { question, lang } }),
+  voiceRefine: (direction: RefineDirection, lang: Lang) =>
+    req<VoiceReading>("/voice/refine", { method: "POST", body: { direction, lang } }),
   daily: (lang: Lang) => req<{ date: string; text: string }>(`/oracle/daily?lang=${lang}`),
   readings: () => req<Reading[]>("/readings"),
 
@@ -136,6 +148,7 @@ export const api = {
 
   // owner
   ownerOverview: () => req<any>("/owner/overview"),
+  voiceLog: () => req<any>("/owner/voice-log"),
   updateSettings: (body: Partial<Settings>) => req<Settings>("/owner/settings", { method: "PUT", body }),
   setActive: (id: string, active: boolean) =>
     req<{ ok: boolean }>(`/owner/customers/${id}/active`, { method: "POST", body: { active } }),

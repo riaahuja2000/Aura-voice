@@ -5,13 +5,18 @@ import type { Lang } from "@/src/api";
 export const TTS_LANG: Record<Lang, string> = { en: "en-US", hi: "hi-IN", hng: "hi-IN" };
 
 let speaking = false;
+let paused = false;
 const listeners = new Set<() => void>();
-function emit(v: boolean) {
+function emit(v: boolean, p = false) {
   speaking = v;
+  paused = p;
   listeners.forEach((l) => l());
 }
 
-export function speakText(text: string, opts: { lang: Lang; rate?: number; voice?: string }) {
+export function speakText(
+  text: string,
+  opts: { lang: Lang; rate?: number; voice?: string; whisper?: boolean },
+) {
   try {
     Speech.stop();
   } catch {
@@ -20,11 +25,15 @@ export function speakText(text: string, opts: { lang: Lang; rate?: number; voice
   emit(true);
   Speech.speak(text, {
     language: TTS_LANG[opts.lang] || "en-US",
-    rate: opts.rate && opts.rate > 0 ? opts.rate : 0.95,
-    pitch: 1.02,
+    rate: opts.whisper ? 0.8 : opts.rate && opts.rate > 0 ? opts.rate : 0.95,
+    pitch: opts.whisper ? 0.9 : 1.02,
+    volume: opts.whisper ? 0.45 : 1.0,
     voice: opts.voice || undefined,
     onDone: () => emit(false),
-    onStopped: () => emit(false),
+    onStopped: () => {
+      // keep "speaking" true while paused so resume works
+      if (!paused) emit(false);
+    },
     onError: () => emit(false),
   });
 }
@@ -36,6 +45,34 @@ export function stopSpeak() {
     /* ignore */
   }
   emit(false);
+}
+
+/** Pause spoken audio. Supported on iOS + web; returns false elsewhere (caller should stop instead). */
+export function pauseSpeak(): boolean {
+  try {
+    if (!speaking) return false;
+    Speech.pause();
+    emit(true, true);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Resume paused audio. Returns false when unsupported. */
+export function resumeSpeak(): boolean {
+  try {
+    if (!paused) return false;
+    Speech.resume();
+    emit(true, false);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isPaused() {
+  return paused;
 }
 
 export async function listVoices(lang: Lang): Promise<Speech.Voice[]> {

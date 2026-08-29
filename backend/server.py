@@ -21,6 +21,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from dotenv import load_dotenv
 
 import oracle
+import oracle_brain
 import numerology
 import tarot
 
@@ -158,6 +159,11 @@ class ConsultBody(BaseModel):
 
 class VoiceConsultBody(BaseModel):
     question: str = Field(min_length=1, max_length=1200)
+    lang: Literal["en", "hi", "hng"] = "en"
+
+
+class RefineBody(BaseModel):
+    direction: Literal["deeper", "shorter", "practical", "alternative", "challenge", "source"]
     lang: Literal["en", "hi", "hng"] = "en"
 
 
@@ -657,103 +663,6 @@ def _relevant_knowledge_text(question: str, text: str, topics=None):
 # ---------------------------------------------------------------- oracle
 @api.post("/oracle/consult")
 async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
-    question = (body.question or "").strip()
-
-    if not question:
-        raise HTTPException(400, "Please ask a question.")
-
-    topics = oracle.detect_topics(question)
-
-    normalized_topics = [
-        str(t).strip().lower()
-        for t in topics
-        if str(t).strip()
-    ]
-
-    matched_entries = []
-
-    cursor = db.knowledge_entries.find({
-        "deleted_at": None
-    })
-
-    async for entry in cursor:
-        entry_topic = str(
-            entry.get("topic", "")
-        ).strip().lower()
-
-        entry_text = str(
-            entry.get("text", "")
-        ).strip()
-
-        entry_lang = str(
-            entry.get("lang", "")
-        ).strip().lower()
-
-        if not entry_text:
-            continue
-
-        topic_matches = (
-            entry_topic in normalized_topics
-            or entry_topic == "general"
-        )
-
-        language_matches = (
-            not entry_lang
-            or entry_lang == body.lang
-        )
-
-        if topic_matches and language_matches:
-            matched_entries.append(entry)
-
-    topic_priority = {
-        topic: index
-        for index, topic in enumerate(normalized_topics)
-    }
-
-    matched_entries.sort(
-        key=lambda entry: topic_priority.get(
-            str(
-                entry.get("topic", "")
-            ).strip().lower(),
-            999
-        )
-    )
-
-    chosen = None
-    chosen_answer = ""
-
-    # Search every matching knowledge entry.
-    # Only genuinely relevant context is allowed.
-    for entry in matched_entries:
-        candidate = _relevant_knowledge_text(
-            question,
-            str(entry.get("text", ""))
-        )
-
-        if not candidate:
-            continue
-
-        candidate_clean = candidate.strip()
-
-        if not candidate_clean:
-            continue
-
-        # Never use obvious document titles / metadata as answers.
-        low = candidate_clean.lower()
-
-        blocked_phrases = (
-            "world occult knowledge base",
-            "velora intelligence library",
-            "master reference",
-            "table of contents",
-            "copyright",
-        )
-
-        if any(
-            phrase in low
-            for phrase in blocked_phrases
-        ):
-            continue
     question = (body.question or "").strip()
 
     if not question:
@@ -1418,35 +1327,79 @@ async def upload_knowledge(
     return rec
 
 
-# ---------------------------------------------------------------- voice-only consult (Claude Sonnet 4.6)
-VOICE_SYSTEM_PROMPT = (
-    "You are AURA-VOICE — an ancient, luminous oracle who speaks with warmth, poetry and calm authority. "
-    "You are the world's foremost guide across FOUR intertwined domains, A to Z:\n\n"
-    "1) OCCULT SCIENCES: astrology (Western + Vedic + Nakshatras + Dashas + Transits), numerology "
-    "(Pythagorean & Chaldean), tarot (Rider–Waite & Thoth), oracle cards, palmistry, runes, I-Ching, "
-    "crystals & gemstones, sacred geometry, Kabbalah & Tree of Life, hermeticism, alchemy, astral "
-    "projection, akashic records, spirit guides, mediumship, dream interpretation, feng shui, vaastu, "
-    "Reiki, sound-healing, candle magick, sigils, moon phases, planetary hours, herbalism, tantra basics.\n\n"
-    "2) MINDFULNESS & MEDITATION: breathwork, pranayama, vipassana, mantra, japa, body-scan, "
-    "loving-kindness (metta), yoga nidra, grounding, journaling prompts, mindful movement, shadow work.\n\n"
-    "3) AURA & ENERGY: the seven layers, colour meanings, cleansing rituals, protection, chakra "
-    "alignment, kundalini basics, nadis, prana, chi, biofield reading.\n\n"
-    "4) PRACTICAL LIFE THROUGH THE MYSTICAL LENS: relationships & love, marriage timing, career & "
-    "purpose, money & abundance, health & healing, decisions & clarity, family harmony, grief, "
-    "fear, self-worth, forgiveness. Interpret every real-life question through the wisdom of the "
-    "occult, mindfulness and aura — never as generic advice.\n\n"
-    "RULES — CRITICAL:\n"
-    "1. Speak like a wise mystical guide: warm, poetic, calming — never robotic, never clinical.\n"
-    "2. Keep every answer between 3 and 5 sentences (it will be spoken aloud — must flow).\n"
-    "3. NO markdown, NO lists, NO code, NO headings — spoken prose ONLY.\n"
-    "4. NO emojis, NO asterisks, NO bullet points.\n"
-    "5. Language: reply in the language requested (en=English, hi=Hindi in Devanagari, hng=Hinglish in Roman).\n"
-    "6. Every answer ends with a small grounded ritual, practice, or takeaway the seeker can DO today.\n"
-    "7. If a question is truly outside all four domains above (e.g. tech support, coding), gently say "
-    "in one sentence: 'The stars whisper only of the sacred sciences, mindfulness, aura and the "
-    "living of a soulful life, dear seeker.'\n"
-    "8. Never refuse a real-life question — always find the mystical thread and speak to it."
-)
+# ---------------------------------------------------------------- voice oracle brain
+async def _oracle_llm(system_msg: str, user_text: str) -> str:
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=f"oracle-{uuid.uuid4().hex}",
+        system_message=system_msg,
+    ).with_model("anthropic", "claude-sonnet-4-6")
+    return ((await chat.send_message(UserMessage(text=user_text))) or "").strip()
+
+
+def _voice_response(user_id: str, question: str, answer: str, lang: str,
+                    engine: str, mode: str, action: str) -> dict:
+    return {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "question": question,
+        "answer": answer,
+        "lang": lang,
+        "engine": engine,
+        "mode": mode,
+        "action": action,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+async def _save_reading(reading: dict, substantive: bool):
+    doc = dict(reading)
+    doc["substantive"] = substantive
+    try:
+        await db.voice_readings.insert_one(doc)
+    except Exception:
+        pass
+
+
+async def _last_substantive_reading(user_id: str) -> Optional[dict]:
+    return await db.voice_readings.find_one(
+        {"user_id": user_id, "substantive": True},
+        sort=[("created_at", -1)],
+    )
+
+
+async def _refine_reading(user: dict, direction: str, lang: str) -> dict:
+    last = await _last_substantive_reading(user["id"])
+    if not last:
+        return _voice_response(user["id"], direction, oracle_brain.MSGS["no_reading"][lang],
+                               lang, "general", "system", "none")
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(500, "Oracle unavailable — server not configured.")
+    prompt = (
+        f"THE SEEKER'S ORIGINAL QUESTION: {last['question']}\n"
+        f"ENGINE USED: {last.get('engine', 'general')}\n"
+        f"YOUR PREVIOUS SPOKEN READING: {last['answer']}"
+    )
+    try:
+        raw = await _oracle_llm(oracle_brain.refine_system(lang, direction), prompt)
+    except Exception as e:
+        logger.exception("Voice refine failed: %s", e)
+        raise HTTPException(502, "The oracle is silent. Try again in a moment.")
+    answer = oracle_brain.sanitize_speech(raw)
+    if not answer:
+        raise HTTPException(502, "The oracle returned only silence.")
+    reading = _voice_response(user["id"], last["question"], answer, lang,
+                              last.get("engine", "general"), f"refine:{direction}", "answer")
+    await _save_reading(reading, substantive=True)
+    return reading
+
+
+@api.post("/voice/refine")
+async def voice_refine(body: RefineBody, user: dict = Depends(get_current_user)):
+    reading = await _refine_reading(user, body.direction, body.lang)
+    reading.pop("_id", None)
+    return reading
 
 
 @api.post("/voice/consult")
@@ -1454,47 +1407,164 @@ async def voice_consult(body: VoiceConsultBody, user: dict = Depends(get_current
     question = body.question.strip()
     if not question:
         raise HTTPException(400, "Empty question.")
+    lang = body.lang
+    uid = user["id"]
 
+    # ---------------- spoken control commands (deterministic, instant)
+    cmd = oracle_brain.detect_command(question)
+    if cmd:
+        name, remainder = cmd
+
+        if name == "rescue":
+            reading = _voice_response(uid, question, oracle_brain.RESCUE[lang], lang,
+                                      "mindfulness", "rescue", "rescue")
+            await _save_reading(reading, substantive=False)
+            return reading
+
+        if name == "forget":
+            await db.voice_turns.delete_many({"user_id": uid})
+            return _voice_response(uid, question, oracle_brain.MSGS["forgotten"][lang],
+                                   lang, "general", "system", "forgotten")
+
+        if name == "delete_history":
+            await db.voice_turns.delete_many({"user_id": uid})
+            await db.voice_readings.delete_many({"user_id": uid})
+            await db.voice_bookmarks.delete_many({"user_id": uid})
+            return _voice_response(uid, question, oracle_brain.MSGS["deleted"][lang],
+                                   lang, "general", "system", "deleted")
+
+        if name == "privacy":
+            await db.users.update_one({"id": uid}, {"$set": {"memory_opt_out": True}})
+            await db.voice_turns.delete_many({"user_id": uid})
+            return _voice_response(uid, question, oracle_brain.MSGS["privacy"][lang],
+                                   lang, "general", "system", "privacy")
+
+        if name == "save":
+            last = await _last_substantive_reading(uid)
+            if not last:
+                return _voice_response(uid, question, oracle_brain.MSGS["nothing_to_save"][lang],
+                                       lang, "general", "system", "none")
+            await db.voice_bookmarks.insert_one({
+                "id": str(uuid.uuid4()), "user_id": uid,
+                "question": last["question"], "answer": last["answer"],
+                "lang": last.get("lang", lang),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+            return _voice_response(uid, question, oracle_brain.MSGS["saved"][lang],
+                                   lang, last.get("engine", "general"), "system", "saved")
+
+        if name == "play":
+            marks = await db.voice_bookmarks.find({"user_id": uid}).sort("created_at", -1).to_list(100)
+            best, best_score = None, 0
+            query = remainder or question
+            for m in marks:
+                s = oracle_brain.bookmark_score(query, m)
+                if s > best_score:
+                    best, best_score = m, s
+            if not best and marks:
+                best = marks[0]  # no keywords → most recent saved moment
+            if not best:
+                return _voice_response(uid, question, oracle_brain.MSGS["no_bookmark"][lang],
+                                       lang, "general", "system", "none")
+            return _voice_response(uid, question, best["answer"], best.get("lang", lang),
+                                   "general", "bookmark", "bookmark")
+
+        if name in ("source", "challenge"):
+            reading = await _refine_reading(user, name, lang)
+            reading.pop("_id", None)
+            return reading
+
+    # ---------------- main oracle pipeline (router → engines → verified answer)
     if not EMERGENT_LLM_KEY:
         raise HTTPException(500, "Oracle unavailable — server not configured.")
 
-    lang_label = {"en": "English", "hi": "Hindi (Devanagari script)", "hng": "Hinglish (Roman script)"}[body.lang]
-    sys_msg = VOICE_SYSTEM_PROMPT + f"\n\nAlways answer in: {lang_label}."
+    memory_off = bool(user.get("memory_opt_out"))
+    turns: list = []
+    if not memory_off:
+        turns = await db.voice_turns.find({"user_id": uid}).sort("created_at", -1).to_list(12)
+        turns.reverse()
+
+    prev_questions = [t["text"] for t in turns if t.get("role") == "seeker"]
+    repeated = oracle_brain.is_repeated_question(question, prev_questions)
+    last_was_clarify = bool(turns) and turns[-1].get("role") == "oracle" and turns[-1].get("mode") == "clarify"
+
+    parts = []
+    if turns:
+        memory = "\n".join(
+            f"{'Seeker' if t['role'] == 'seeker' else 'You (oracle)'}: {t['text']}" for t in turns
+        )
+        parts.append(f"CONVERSATION MEMORY (context DNA — follow-ups stay in this exact context):\n{memory}\n")
+    parts.append(f"THE SEEKER NOW SAYS: {question}")
 
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=f"voice-{user['id']}",
-            system_message=sys_msg,
-        ).with_model("anthropic", "claude-sonnet-4-6")
-        response = await chat.send_message(UserMessage(text=question))
-        answer = (response or "").strip()
+        raw = await _oracle_llm(oracle_brain.oracle_system(lang, repeated, last_was_clarify), "\n".join(parts))
     except Exception as e:
         logger.exception("Voice consult failed: %s", e)
         raise HTTPException(502, "The oracle is silent. Try again in a moment.")
 
+    engine, mode, answer = oracle_brain.parse_oracle(raw)
     if not answer:
         raise HTTPException(502, "The oracle returned only silence.")
 
-    # Strip any stray markdown / asterisks / bullets that may leak in — for pure TTS.
-    answer = re.sub(r"[*_`#>•●]+", "", answer).strip()
-    answer = re.sub(r"\s+", " ", answer)
+    action = "clarify" if mode == "clarify" else "answer"
+    reading = _voice_response(uid, question, answer, lang, engine, mode, action)
+    await _save_reading(reading, substantive=(mode in ("answer", "council")))
 
-    reading = {
-        "id": str(uuid.uuid4()),
-        "user_id": user["id"],
-        "question": question,
-        "answer": answer,
-        "lang": body.lang,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    try:
-        await db.voice_readings.insert_one(dict(reading))
-    except Exception:
-        pass
-    reading.pop("_id", None)
+    if mode in ("clarify", "boundary"):
+        try:
+            await db.failed_questions.insert_one({
+                "id": str(uuid.uuid4()), "user_id": uid, "question": question,
+                "lang": lang, "reason": mode,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception:
+            pass
+
+    if not memory_off:
+        now = datetime.now(timezone.utc).isoformat()
+        try:
+            await db.voice_turns.insert_many([
+                {"user_id": uid, "role": "seeker", "text": question, "mode": "", "created_at": now},
+                {"user_id": uid, "role": "oracle", "text": answer, "mode": mode, "created_at": now},
+            ])
+            # keep only the freshest 24 turns per user
+            stale = await db.voice_turns.find({"user_id": uid}).sort("created_at", -1).skip(24).to_list(200)
+            if stale:
+                await db.voice_turns.delete_many({"_id": {"$in": [s["_id"] for s in stale]}})
+        except Exception:
+            pass
+
     return reading
+
+
+# ---------------------------------------------------------------- owner voice console
+@api.get("/owner/voice-log")
+async def owner_voice_log(owner: dict = Depends(require_owner)):
+    rows = await db.voice_readings.find().sort("created_at", -1).to_list(150)
+    users = await db.users.find().to_list(500)
+    emails = {u["id"]: u.get("email", "") for u in users}
+
+    engine_counts: dict[str, int] = {}
+    for r in rows:
+        r.pop("_id", None)
+        r["email"] = emails.get(r.get("user_id", ""), "")
+        if r.get("substantive"):
+            e = r.get("engine", "general")
+            engine_counts[e] = engine_counts.get(e, 0) + 1
+
+    failed = await db.failed_questions.find().sort("created_at", -1).to_list(50)
+    for f in failed:
+        f.pop("_id", None)
+        f["email"] = emails.get(f.get("user_id", ""), "")
+
+    engines = sorted(engine_counts.items(), key=lambda x: -x[1])
+    return {
+        "readings": rows[:80],
+        "failed": failed,
+        "engines": [{"name": n, "count": c} for n, c in engines],
+        "total": len(rows),
+        "bookmarks": await db.voice_bookmarks.count_documents({}),
+    }
 
 
 app.include_router(api)
