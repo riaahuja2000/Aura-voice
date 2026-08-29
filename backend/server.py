@@ -561,13 +561,7 @@ else:
         {}
     )
 
-    else:
-        result = oracle.compose_answer(
-            question,
-            body.lang,
-            topics,
-            {}
-        )
+    
 
     now = datetime.now(timezone.utc).isoformat()
     reading = {
