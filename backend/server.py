@@ -256,53 +256,59 @@ def _init_storage() -> Optional[str]:
     return _storage_key
 
 
-def _put_object(path: str, data: bytes, content_type: str):
+def _vercel_blob_credentials():
     store_id = (os.getenv("BLOB_STORE_ID") or "").strip()
-    token = (os.getenv("BLOB_READ_WRITE_TOKEN") or "").strip()
 
+    try:
+        from vercel.functions import get_env
+        env = get_env()
+        oidc_token = (
+            os.getenv("VERCEL_OIDC_TOKEN")
+            or getattr(env, "VERCEL_OIDC_TOKEN", "")
+            or ""
+        ).strip()
+    except Exception:
+        oidc_token = (os.getenv("VERCEL_OIDC_TOKEN") or "").strip()
+
+    # Vercel Blob API expects store ID without "store_" prefix.
     if store_id.startswith("store_"):
-        store_id = store_id[6:]
+        store_id = store_id[len("store_"):]
 
-    if not store_id or not token:
-        raise RuntimeError("Vercel Blob storage is not configured")
+    return store_id, oidc_token
 
-    response = requests.put(
+
+def _put_object(path: str, data: bytes, content_type: str):
+    store_id, oidc_token = _vercel_blob_credentials()
+
+    if not store_id:
+        raise RuntimeError("BLOB_STORE_ID is missing")
+
+    if not oidc_token:
+        raise RuntimeError("Vercel OIDC token is unavailable")
+
+    resp = requests.put(
         "https://vercel.com/api/blob/",
         params={"pathname": path},
         headers={
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"Bearer {oidc_token}",
             "x-vercel-blob-store-id": store_id,
-            "x-vercel-blob-access": "private",
-            "x-content-type": content_type or "application/octet-stream",
-            "x-api-version": "12",
             "x-api-blob-request-id": f"{store_id}:{uuid.uuid4().hex}",
             "x-api-blob-request-attempt": "0",
+            "x-api-version": "12",
+            "x-vercel-blob-access": "private",
+            "x-content-type": content_type or "application/octet-stream",
+            "x-add-random-suffix": "0",
         },
         data=data,
         timeout=60,
     )
 
-    response.raise_for_status()
-    return response.json()
-
-
-def _get_object(path: str) -> tuple[bytes, str]:
-    global _storage_key
-    key = _init_storage()
-    if not key:
-        raise RuntimeError("Storage unavailable")
-    resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
     resp.raise_for_status()
-    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+    return resp.json()
 
 
 def _storage_ready() -> bool:
-    return bool(
-        os.getenv("BLOB_STORE_ID")
-        and os.getenv("BLOB_READ_WRITE_TOKEN")
-    )
-
-
+    return bool(os.getenv("BLOB_STORE_ID"))
 # ---------------------------------------------------------------- (no external AI)
 # This app uses ZERO AI inference credit. Speech-to-text and text-to-speech run
 # on the user's device (free); answers come only from the local knowledge engine.
