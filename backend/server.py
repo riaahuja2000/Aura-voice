@@ -391,7 +391,105 @@ async def update_me(body: ProfileBody, user: dict = Depends(get_current_user)):
         user = await db.users.find_one({"id": user["id"]})
     return public_user(user)
 
+def _relevant_knowledge_text(question: str, text: str) -> str:
+    import re
 
+    q = (question or "").lower().strip()
+    raw = (text or "").strip()
+
+    if not q or not raw:
+        return ""
+
+    # Manually-added short answers should remain exact.
+    if len(raw) <= 700:
+        return raw
+
+    # Words that add little retrieval value.
+    stop = {
+        "the", "a", "an", "is", "are", "was", "were", "to", "of",
+        "and", "or", "in", "on", "for", "with", "my", "me", "i",
+        "meri", "mera", "mere", "mujhe", "hai", "hogi", "hoga",
+        "ka", "ki", "ke", "kab", "kya", "ko"
+    }
+
+    q_words = {
+        w for w in re.findall(r"\w+", q, flags=re.UNICODE)
+        if len(w) > 2 and w not in stop
+    }
+
+    # Helpful Hinglish/English concept expansion.
+    concepts = {
+        "shaadi": {"shaadi", "marriage", "wedding", "spouse", "partner"},
+        "marriage": {"shaadi", "marriage", "wedding", "spouse", "partner"},
+        "love": {"love", "relationship", "romance", "partner", "shaadi"},
+        "relationship": {"relationship", "love", "romance", "partner"},
+        "timing": {"timing", "when", "period", "date", "month", "year", "kab"},
+        "career": {"career", "job", "work", "profession", "business"},
+        "money": {"money", "finance", "wealth", "income", "financial"},
+        "health": {"health", "body", "wellness"},
+    }
+
+    expanded = set(q_words)
+
+    for key, family in concepts.items():
+        if key in q or any(word in q for word in family):
+            expanded.update(family)
+
+    # Split document into actual contextual passages.
+    blocks = re.split(r"\n\s*\n|(?<=[.!?])\s+", raw)
+
+    junk_phrases = (
+        "world occult knowledge base",
+        "master reference",
+        "velora intelligence library",
+        "knowledge base",
+        "table of contents",
+        "copyright",
+    )
+
+    ranked = []
+
+    for block in blocks:
+        block = re.sub(r"\s+", " ", block).strip()
+
+        if len(block) < 35:
+            continue
+
+        low = block.lower()
+
+        # Ignore document titles / metadata.
+        if any(junk in low for junk in junk_phrases):
+            continue
+
+        words = set(re.findall(r"\w+", low, flags=re.UNICODE))
+
+        score = len(words & expanded) * 3
+
+        # Exact query concepts get extra weight.
+        for term in expanded:
+            if term in low:
+                score += 2
+
+        ranked.append((score, block))
+
+    ranked.sort(key=lambda x: x[0], reverse=True)
+
+    # Do NOT answer from unrelated uploaded material.
+    if not ranked or ranked[0][0] < 3:
+        return ""
+
+    best = []
+
+    for score, block in ranked[:3]:
+        if score < 3:
+            continue
+        if block not in best:
+            best.append(block)
+
+    answer = " ".join(best).strip()
+
+    # Keep voice output concise.
+    return answer[:1400]
 # ---------------------------------------------------------------- oracle
 @api.post("/oracle/consult")
 async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
@@ -431,11 +529,37 @@ async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
 
         chosen = matched_entries[0]
 
-        result = {
-            "answer": chosen["text"],
-            "topics": topics,
-            "primary": chosen.get("topic") or (topics[0] if topics else "General"),
-        }
+        chosen_answer = ""
+
+for entry in matched_entries:
+    candidate = _relevant_knowledge_text(
+        question,
+        str(entry.get("text", ""))
+    )
+
+    if candidate:
+        chosen_answer = candidate
+        chosen = entry
+        break
+
+if chosen_answer:
+    result = {
+        "answer": chosen_answer,
+        "topics": topics,
+        "primary": chosen.get("topic") or (
+            topics[0] if topics else "General"
+        ),
+    }
+
+else:
+    # Uploaded knowledge had no genuine context
+    # relevant to this exact question.
+    result = oracle.compose_answer(
+        question,
+        body.lang,
+        topics,
+        {}
+    )
 
     else:
         result = oracle.compose_answer(
