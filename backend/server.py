@@ -401,8 +401,7 @@ def _relevant_knowledge_text(question: str, text: str) -> str:
         return ""
 
     # Manually-added short answers should remain exact.
-    if len(raw) <= 700:
-        return raw
+
 
     # Words that add little retrieval value.
     stop = {
@@ -493,77 +492,136 @@ def _relevant_knowledge_text(question: str, text: str) -> str:
 # ---------------------------------------------------------------- oracle
 @api.post("/oracle/consult")
 async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
-    question = (body.question or "").strip()[:800]
+        question = (body.question or "").strip()
+
     if not question:
-        raise HTTPException(400, "Please share your question.")
+        raise HTTPException(400, "Please ask a question.")
+
     topics = oracle.detect_topics(question)
 
-        # OWNER KNOWLEDGE HAS FIRST PRIORITY.
-    # If a matching owner-fed answer exists, return it EXACTLY.
-    normalized_topics = [str(t).strip().lower() for t in topics]
+    normalized_topics = [
+        str(t).strip().lower()
+        for t in topics
+        if str(t).strip()
+    ]
 
     matched_entries = []
-    cursor = db.knowledge_entries.find({"lang": body.lang})
+
+    cursor = db.knowledge_entries.find({
+        "deleted_at": None
+    })
 
     async for entry in cursor:
-        entry_topic = str(entry.get("topic", "")).strip().lower()
-        entry_text = str(entry.get("text", "")).strip()
+        entry_topic = str(
+            entry.get("topic", "")
+        ).strip().lower()
 
-        if (
-    entry_topic in normalized_topics
-    or entry_topic == "general"
-) and entry_text:
-            matched_entries.append(entry)
+        entry_text = str(
+            entry.get("text", "")
+        ).strip()
 
-    if matched_entries:
-        topic_priority = {
-            topic: index for index, topic in enumerate(normalized_topics)
-        }
+        entry_lang = str(
+            entry.get("lang", "")
+        ).strip().lower()
 
-        matched_entries.sort(
-            key=lambda entry: topic_priority.get(
-                str(entry.get("topic", "")).strip().lower(),
-                999
-            )
+        if not entry_text:
+            continue
+
+        topic_matches = (
+            entry_topic in normalized_topics
+            or entry_topic == "general"
         )
 
-        chosen = matched_entries[0]
+        language_matches = (
+            not entry_lang
+            or entry_lang == body.lang
+        )
 
-        chosen_answer = ""
+        if topic_matches and language_matches:
+            matched_entries.append(entry)
 
-for entry in matched_entries:
-    candidate = _relevant_knowledge_text(
-        question,
-        str(entry.get("text", ""))
-    )
-
-    if candidate:
-        chosen_answer = candidate
-        chosen = entry
-        break
-
-if chosen_answer:
-    result = {
-        "answer": chosen_answer,
-        "topics": topics,
-        "primary": chosen.get("topic") or (
-            topics[0] if topics else "General"
-        ),
+    topic_priority = {
+        topic: index
+        for index, topic in enumerate(normalized_topics)
     }
 
-else:
-    # Uploaded knowledge had no genuine context
-    # relevant to this exact question.
-    result = oracle.compose_answer(
-        question,
-        body.lang,
-        topics,
-        {}
+    matched_entries.sort(
+        key=lambda entry: topic_priority.get(
+            str(
+                entry.get("topic", "")
+            ).strip().lower(),
+            999
+        )
     )
 
-    
+    chosen = None
+    chosen_answer = ""
 
-    now = datetime.now(timezone.utc).isoformat()
+    # Search every matching knowledge entry.
+    # Only genuinely relevant context is allowed.
+    for entry in matched_entries:
+        candidate = _relevant_knowledge_text(
+            question,
+            str(entry.get("text", ""))
+        )
+
+        if not candidate:
+            continue
+
+        candidate_clean = candidate.strip()
+
+        if not candidate_clean:
+            continue
+
+        # Never use obvious document titles / metadata as answers.
+        low = candidate_clean.lower()
+
+        blocked_phrases = (
+            "world occult knowledge base",
+            "velora intelligence library",
+            "master reference",
+            "table of contents",
+            "copyright",
+        )
+
+        if any(
+            phrase in low
+            for phrase in blocked_phrases
+        ):
+            continue
+
+        chosen = entry
+        chosen_answer = candidate_clean
+        break
+
+    if chosen_answer:
+        result = {
+            "answer": chosen_answer,
+            "topics": topics,
+            "primary": (
+                chosen.get("topic")
+                or (
+                    topics[0]
+                    if topics
+                    else "General"
+                )
+            ),
+        }
+
+    else:
+        # No relevant uploaded knowledge was found.
+        # Never return random document content.
+        result = oracle.compose_answer(
+            question,
+            body.lang,
+            topics,
+            {}
+        )
+
+    now = datetime.now(
+        timezone.utc
+    ).isoformat()
+
     reading = {
         "id": str(uuid.uuid4()),
         "user_id": user["id"],
@@ -575,10 +633,13 @@ else:
         "created_at": now,
     }
 
-    await db.readings.insert_one(dict(reading))
-    reading.pop("_id", None)
-    return reading
+    await db.readings.insert_one(
+        dict(reading)
+    )
 
+    reading.pop("_id", None)
+
+    return reading
 
 @api.get("/oracle/daily")
 async def daily(lang: str = "en", user: dict = Depends(get_current_user)):
