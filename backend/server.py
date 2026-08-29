@@ -411,7 +411,10 @@ async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
         entry_topic = str(entry.get("topic", "")).strip().lower()
         entry_text = str(entry.get("text", "")).strip()
 
-        if entry_topic in normalized_topics and entry_text:
+        if (
+    entry_topic in normalized_topics
+    or entry_topic == "general"
+) and entry_text:
             matched_entries.append(entry)
 
     if matched_entries:
@@ -679,55 +682,258 @@ async def delete_knowledge(eid: str, owner: dict = Depends(require_owner)):
 
 
 @api.post("/owner/knowledge/upload")
-async def upload_knowledge(file: UploadFile = File(...), owner: dict = Depends(require_owner)):
-     data = await file.read()
+async def upload_knowledge(
+    file: UploadFile = File(...),
+    owner: dict = Depends(require_owner),
+):
+    from io import BytesIO
+    import json as _json
+
+    data = await file.read()
+
     if not data:
         raise HTTPException(400, "Empty file.")
+
     if len(data) > 25 * 1024 * 1024:
-        raise HTTPException(400, "File must be under 25MB.")
-    name = file.filename or "knowledge.bin"
-    ext = (name.rsplit(".", 1)[-1] if "." in name else "bin").lower()
+        raise HTTPException(400, "File must be under 25 MB.")
+
+    name = file.filename or "knowledge.txt"
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else "txt"
     ct = file.content_type or "application/octet-stream"
-    path = f"{APP_SLUG}/knowledge/{uuid.uuid4().hex}.{ext}"
-    try: await run_in_threadpool(_put_object, path, data, ct)
-        await run_in_threadpool(_put_object, path, data, ct)
-    except Exception:
-        logger.exception("KB upload failed")
-        raise HTTPException(502, "Upload failed. Try again.")
+
+    allowed = {"json", "txt", "md", "csv", "pdf", "docx"}
+
+    if ext not in allowed:
+        raise HTTPException(
+            400,
+            "Supported files: JSON, TXT, MD, CSV, PDF and DOCX."
+        )
+
+    now = datetime.now(timezone.utc).isoformat()
+    bulk = []
     ingested = 0
+    extracted_text = ""
+
+    # -----------------------------------------
+    # STRUCTURED JSON KNOWLEDGE PACK
+    # Format:
+    # {
+    #   "Tarot": {
+    #       "en": ["answer 1", "answer 2"],
+    #       "hi": [...],
+    #       "hng": [...]
+    #   }
+    # }
+    # -----------------------------------------
     if ext == "json":
         try:
-            import json as _json
             parsed = _json.loads(data.decode("utf-8"))
-            now = datetime.now(timezone.utc).isoformat()
-            bulk = []
-            for topic, langs in parsed.items():
-                if topic not in oracle.PACK or not isinstance(langs, dict):
-                    continue
-                for lg, arr in langs.items():
-                    if lg not in ("en", "hi", "hng") or not isinstance(arr, list):
-                        continue
-                    for txt in arr:
-                        if isinstance(txt, str) and len(txt.strip()) >= 8:
-                            bulk.append({"id": str(uuid.uuid4()), "topic": topic, "lang": lg,
-                                         "text": txt.strip(), "deleted_at": None, "created_at": now})
-            if bulk:
-                await db.knowledge_entries.insert_many(bulk)
-                ingested = len(bulk)
-        except Exception:
-            logger.warning("KB json ingest skipped (not the expected schema)")
+
+            structured = False
+
+            if isinstance(parsed, dict):
+                for topic, langs in parsed.items():
+                    if (
+                        topic in oracle.PACK
+                        and isinstance(langs, dict)
+                    ):
+                        structured = True
+
+                        for lg, arr in langs.items():
+                            if lg not in ("en", "hi", "hng"):
+                                continue
+
+                            if isinstance(arr, str):
+                                arr = [arr]
+
+                            if not isinstance(arr, list):
+                                continue
+
+                            for txt in arr:
+                                if not isinstance(txt, str):
+                                    continue
+
+                                txt = txt.strip()
+
+                                if not txt:
+                                    continue
+
+                                bulk.append({
+                                    "id": str(uuid.uuid4()),
+                                    "topic": topic,
+                                    "lang": lg,
+                                    "text": txt,
+                                    "deleted_at": None,
+                                    "created_at": now,
+                                })
+
+            if not structured:
+                extracted_text = _json.dumps(
+                    parsed,
+                    ensure_ascii=False,
+                    indent=2
+                )
+
+        except Exception as e:
+            raise HTTPException(
+                400,
+                f"Invalid JSON file: {str(e)}"
+            )
+
+    # -----------------------------------------
+    # TXT / MARKDOWN / CSV
+    # -----------------------------------------
+    elif ext in ("txt", "md", "csv"):
+        try:
+            extracted_text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            extracted_text = data.decode(
+                "latin-1",
+                errors="ignore"
+            )
+
+    # -----------------------------------------
+    # PDF
+    # Text-based PDFs only
+    # -----------------------------------------
+    elif ext == "pdf":
+        try:
+            from pypdf import PdfReader
+
+            reader = PdfReader(BytesIO(data))
+            pages = []
+
+            for page in reader.pages:
+                text = page.extract_text() or ""
+                if text.strip():
+                    pages.append(text)
+
+            extracted_text = "\n\n".join(pages)
+
+        except Exception as e:
+            raise HTTPException(
+                400,
+                f"Could not read PDF: {str(e)}"
+            )
+
+    # -----------------------------------------
+    # DOCX
+    # -----------------------------------------
+    elif ext == "docx":
+        try:
+            from docx import Document
+
+            document = Document(BytesIO(data))
+
+            extracted_text = "\n".join(
+                paragraph.text
+                for paragraph in document.paragraphs
+                if paragraph.text.strip()
+            )
+
+        except Exception as e:
+            raise HTTPException(
+                400,
+                f"Could not read DOCX: {str(e)}"
+            )
+
+    # -----------------------------------------
+    # AUTO-INGEST NORMAL DOCUMENTS
+    # -----------------------------------------
+    if extracted_text.strip():
+
+        cleaned = "\n".join(
+            line.strip()
+            for line in extracted_text.splitlines()
+            if line.strip()
+        )
+
+        # Break large files into manageable knowledge chunks.
+        chunk_size = 3500
+        chunks = [
+            cleaned[i:i + chunk_size]
+            for i in range(0, len(cleaned), chunk_size)
+            if cleaned[i:i + chunk_size].strip()
+        ]
+
+        # Filename can also help identify the tradition.
+        filename_topics = []
+
+        for topic in oracle.PACK.keys():
+            if topic.lower() in name.lower():
+                filename_topics.append(topic)
+
+        for chunk in chunks:
+
+            detected_topics = oracle.detect_topics(chunk)
+
+            detected_topics = [
+                topic
+                for topic in detected_topics
+                if topic in oracle.PACK
+            ]
+
+            if not detected_topics:
+                detected_topics = filename_topics
+
+            # General knowledge becomes fallback knowledge.
+            if not detected_topics:
+                detected_topics = ["General"]
+
+            # Remove duplicate topics.
+            detected_topics = list(
+                dict.fromkeys(detected_topics)
+            )
+
+            for topic in detected_topics:
+
+                # Make uploaded knowledge available
+                # regardless of selected UI language.
+                for lg in ("en", "hi", "hng"):
+
+                    bulk.append({
+                        "id": str(uuid.uuid4()),
+                        "topic": topic,
+                        "lang": lg,
+                        "text": chunk,
+                        "deleted_at": None,
+                        "created_at": now,
+                    })
+
+    if bulk:
+        await db.knowledge_entries.insert_many(
+            [dict(item) for item in bulk]
+        )
+
+        ingested = len(bulk)
+
+    if ingested == 0:
+        raise HTTPException(
+            400,
+            "The file contained no readable knowledge."
+        )
+
+    file_id = str(uuid.uuid4())
+
     rec = {
-        "id": str(uuid.uuid4()),
+        "id": file_id,
         "name": name,
-        "path": path,
+
+        # Original file bytes are not stored.
+        # Its usable knowledge is stored directly in MongoDB.
+        "path": f"mongodb://knowledge/{file_id}",
+
         "content_type": ct,
         "size": len(data),
         "ingested": ingested,
         "deleted_at": None,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": now,
     }
+
     await db.kb_files.insert_one(dict(rec))
+
     rec.pop("_id", None)
+
     return rec
 
 
