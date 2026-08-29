@@ -680,9 +680,7 @@ async def delete_knowledge(eid: str, owner: dict = Depends(require_owner)):
 
 @api.post("/owner/knowledge/upload")
 async def upload_knowledge(file: UploadFile = File(...), owner: dict = Depends(require_owner)):
-    if not _storage_ready():
-        raise HTTPException(503, "File uploads need object storage. Use 'Add answer' to expand the knowledge base instead.")
-    data = await file.read()
+     data = await file.read()
     if not data:
         raise HTTPException(400, "Empty file.")
     if len(data) > 25 * 1024 * 1024:
@@ -691,7 +689,7 @@ async def upload_knowledge(file: UploadFile = File(...), owner: dict = Depends(r
     ext = (name.rsplit(".", 1)[-1] if "." in name else "bin").lower()
     ct = file.content_type or "application/octet-stream"
     path = f"{APP_SLUG}/knowledge/{uuid.uuid4().hex}.{ext}"
-    try:
+    try: await run_in_threadpool(_put_object, path, data, ct)
         await run_in_threadpool(_put_object, path, data, ct)
     except Exception:
         logger.exception("KB upload failed")
