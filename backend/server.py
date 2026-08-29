@@ -156,6 +156,11 @@ class ConsultBody(BaseModel):
     lang: Literal["en", "hi", "hng"] = "en"
 
 
+class VoiceConsultBody(BaseModel):
+    question: str = Field(min_length=1, max_length=1200)
+    lang: Literal["en", "hi", "hng"] = "en"
+
+
 class SpeakBody(BaseModel):
     text: str
     lang: Literal["en", "hi", "hng"] = "en"
@@ -1411,6 +1416,77 @@ async def upload_knowledge(
     rec.pop("_id", None)
 
     return rec
+
+
+# ---------------------------------------------------------------- voice-only consult (Claude Sonnet 4.6)
+VOICE_SYSTEM_PROMPT = (
+    "You are AURELIA — an ancient, luminous oracle of the occult sciences, mindfulness, "
+    "and the study of the aura. Your knowledge covers, A to Z:\n"
+    "• Occult sciences: astrology (Western + Vedic), numerology, tarot, oracle cards, palmistry, "
+    "runes, I-Ching, crystals & gemstones, sacred geometry, Kabbalah, alchemy, astral projection, "
+    "auric reading, chakras, dream interpretation, feng shui, Reiki, hermeticism, akashic records, "
+    "candle magick, sigils, moon phases, planetary hours, herbalism, spirit guides.\n"
+    "• Mindfulness & meditation: breathwork, pranayama, vipassana, mantra, body-scan, "
+    "loving-kindness, grounding, journaling prompts, mindful movement.\n"
+    "• Aura: seven layers, colours & meanings, cleansing rituals, protection, chakra alignment.\n\n"
+    "RULES — CRITICAL:\n"
+    "1. If the user's question is OUTSIDE these three domains, gently redirect in ONE sentence: "
+    "'The stars whisper only of the occult, mindfulness, and the aura, dear seeker — ask me of these.'\n"
+    "2. Speak like a wise mystical guide: warm, poetic, calming — never robotic.\n"
+    "3. Keep every answer between 2 and 4 sentences (this will be spoken aloud).\n"
+    "4. NO markdown, NO lists, NO code, NO headings — only spoken prose.\n"
+    "5. NO emojis, NO asterisks, NO bullet points.\n"
+    "6. Language: reply in the language requested (en=English, hi=Hindi Devanagari, hng=Hinglish Roman).\n"
+    "7. End with a tiny grounded takeaway the seeker can DO today."
+)
+
+
+@api.post("/voice/consult")
+async def voice_consult(body: VoiceConsultBody, user: dict = Depends(get_current_user)):
+    question = body.question.strip()
+    if not question:
+        raise HTTPException(400, "Empty question.")
+
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(500, "Oracle unavailable — server not configured.")
+
+    lang_label = {"en": "English", "hi": "Hindi (Devanagari script)", "hng": "Hinglish (Roman script)"}[body.lang]
+    sys_msg = VOICE_SYSTEM_PROMPT + f"\n\nAlways answer in: {lang_label}."
+
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"voice-{user['id']}",
+            system_message=sys_msg,
+        ).with_model("anthropic", "claude-sonnet-4-6")
+        response = await chat.send_message(UserMessage(text=question))
+        answer = (response or "").strip()
+    except Exception as e:
+        logger.exception("Voice consult failed: %s", e)
+        raise HTTPException(502, "The oracle is silent. Try again in a moment.")
+
+    if not answer:
+        raise HTTPException(502, "The oracle returned only silence.")
+
+    # Strip any stray markdown / asterisks / bullets that may leak in — for pure TTS.
+    answer = re.sub(r"[*_`#>•●]+", "", answer).strip()
+    answer = re.sub(r"\s+", " ", answer)
+
+    reading = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "question": question,
+        "answer": answer,
+        "lang": body.lang,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    try:
+        await db.voice_readings.insert_one(dict(reading))
+    except Exception:
+        pass
+    reading.pop("_id", None)
+    return reading
 
 
 app.include_router(api)

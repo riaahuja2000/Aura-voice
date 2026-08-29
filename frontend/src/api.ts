@@ -94,6 +94,11 @@ export const api = {
   // oracle
   consult: (question: string, lang: Lang) =>
     req<Reading>("/oracle/consult", { method: "POST", body: { question, lang } }),
+  voiceConsult: (question: string, lang: Lang) =>
+    req<{ id: string; question: string; answer: string; lang: Lang; created_at: string }>(
+      "/voice/consult",
+      { method: "POST", body: { question, lang } },
+    ),
   daily: (lang: Lang) => req<{ date: string; text: string }>(`/oracle/daily?lang=${lang}`),
   readings: () => req<Reading[]>("/readings"),
 

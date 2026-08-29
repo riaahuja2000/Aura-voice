@@ -101,3 +101,75 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Build a mobile app: make the most beautiful, out of the box, super fresh and new complete mobile app from end to end so that when voice input is sent, it generates same context output through audio/voice - strictly occult sciences, mindfulness and aura A to Z in the AI knowledge base. No texts in the app only voice input and output."
+
+backend:
+  - task: "Voice consult endpoint using Claude Sonnet 4.6"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added POST /api/voice/consult that calls Claude Sonnet 4.6 via emergentintegrations LlmChat with a strict system prompt for occult sciences, mindfulness and aura A-Z. Off-topic questions get a graceful spoken redirect. Response is stripped of markdown for pure TTS. Manual smoke test passed: green-aura question returned poetic in-scope 4-sentence answer; car-engine question returned the redirect line."
+      - working: true
+        agent: "testing"
+        comment: "Comprehensive testing completed. All 10 tests PASSED: (1) Customer login successful with token, (2) In-scope English question returned 649-char natural prose answer with NO markdown/bullets, (3) Off-topic car question correctly redirected with 'stars whisper only of occult, mindfulness, aura' message, (4) Hindi question returned proper Devanagari script, (5) Hinglish question returned valid answer, (6) No auth correctly rejected with 401, (7) Empty question correctly rejected with 422, (8) Root endpoint working, (9) /auth/me working with token, (10) /settings endpoint working. Voice consult endpoint is production-ready."
+
+frontend:
+  - task: "Voice-only orb home screen with 3 themes"
+    implemented: true
+    working: "NA"
+    file: "frontend/app/(app)/home.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Rewrote home as a text-free voice-only screen. Reactive orb (Reanimated pulse + counter-rotating rings + wobble + glow halo) sits center. Tap orb -> STT -> Claude -> TTS -> back to idle. Long-press orb OR palette icon cycles 3 themes: cosmic nebula, aura flame, silver crescent. Icon-only top bar (theme / owner-shield-if-owner / logout). Ambient twinkling stars. Zero on-screen text. Screenshot verified all three themes render perfectly."
+  - task: "Cross-platform STT hook (native + web)"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/voice-stt.ts"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "New hook that uses expo-speech-recognition on native and Web Speech API on the browser preview so the orb tap works everywhere without crashes."
+  - task: "Simplified app layout (Stack instead of Tabs)"
+    implemented: true
+    working: "NA"
+    file: "frontend/app/(app)/_layout.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Removed bottom tab bar entirely (was text-heavy) and replaced with a plain Stack. Owner access is now a small shield icon in the top bar of the orb home."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 2
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Voice consult endpoint using Claude Sonnet 4.6"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Built a voice-only mystical oracle app. Added POST /api/voice/consult (Claude Sonnet 4.6, occult+mindfulness+aura scope, off-topic redirect). Please test the endpoint with auth token: (1) in-scope English question -> 2-4 sentence poetic answer, no markdown, (2) off-topic question -> exact redirect line, (3) Hindi lang parameter -> Devanagari script answer, (4) unauthenticated call -> 401. Seeded credentials in /app/memory/test_credentials.md."
+  - agent: "testing"
+    message: "Testing complete. All 10 backend tests PASSED. Voice consult endpoint is working perfectly: authentication, in-scope questions, off-topic redirects, multilingual support (English/Hindi/Hinglish), validation, and all sanity checks passed. No issues found. Ready for production."

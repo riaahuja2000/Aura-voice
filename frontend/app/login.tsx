@@ -36,8 +36,8 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const u = await login(email.trim(), password);
-      router.replace(u.is_owner ? ("/owner" as any) : ("/home" as any));
+      await login(email.trim(), password);
+      router.replace("/home" as any);
     } catch (e: any) {
       toast.show(e?.message || t("invalid_credentials"), "error");
     } finally {
