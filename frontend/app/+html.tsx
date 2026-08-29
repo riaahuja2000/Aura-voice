@@ -12,6 +12,14 @@ export default function Root({ children }: PropsWithChildren) {
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
+        <title>AURA-VOICE — Living Voice Oracle</title>
+        <meta
+          name="description"
+          content="AURA-VOICE: a voice-first oracle for occult sciences, mindfulness and aura. Hold the orb, speak your question, hear your reading."
+        />
+        <meta name="theme-color" content="#05000E" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         {/*
           Disable body scrolling on web to make ScrollView components work correctly.
           If you want to enable scrolling, remove `ScrollViewStyleReset` and

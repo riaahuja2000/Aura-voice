@@ -25,7 +25,11 @@ function getWebRecognitionCtor(): any {
   return w.SpeechRecognition || w.webkitSpeechRecognition || null;
 }
 
-export function useVoiceSTT(lang: Lang, onFinalText: (t: string) => void) {
+export function useVoiceSTT(
+  lang: Lang,
+  onFinalText: (t: string) => void,
+  onError?: (code: string) => void,
+) {
   const isWeb = Platform.OS === "web";
   const WebCtor = isWeb ? getWebRecognitionCtor() : null;
   const available = isWeb ? !!WebCtor : !!RM;
@@ -52,7 +56,12 @@ export function useVoiceSTT(lang: Lang, onFinalText: (t: string) => void) {
           if (t) onFinalText(t);
         }),
       );
-      subs.push(RM.addListener("error", () => setListening(false)));
+      subs.push(
+        RM.addListener("error", (e: any) => {
+          setListening(false);
+          onError?.(String(e?.error || "error"));
+        }),
+      );
     } catch {
       /* ignore */
     }
@@ -65,7 +74,7 @@ export function useVoiceSTT(lang: Lang, onFinalText: (t: string) => void) {
         }
       });
     };
-  }, [isWeb, onFinalText]);
+  }, [isWeb, onFinalText, onError]);
 
   const start = useCallback(async () => {
     textRef.current = "";
@@ -88,7 +97,12 @@ export function useVoiceSTT(lang: Lang, onFinalText: (t: string) => void) {
         const t = textRef.current.trim();
         if (t) onFinalText(t);
       };
-      rec.onerror = () => setListening(false);
+      rec.onerror = (ev: any) => {
+        setListening(false);
+        const code = String(ev?.error || "error");
+        // "no-speech"/"aborted" are normal push-to-talk outcomes — not errors.
+        if (code !== "no-speech" && code !== "aborted") onError?.(code);
+      };
       webRef.current = rec;
       rec.start();
       setListening(true);
@@ -96,10 +110,13 @@ export function useVoiceSTT(lang: Lang, onFinalText: (t: string) => void) {
     }
     if (!RM) throw new Error("unavailable");
     const perm = await RM.requestPermissionsAsync();
-    if (!perm?.granted) throw new Error("permission");
+    if (!perm?.granted) {
+      onError?.("not-allowed");
+      throw new Error("permission");
+    }
     RM.start({ lang: TTS_LANG[lang] || "en-US", interimResults: true, continuous: true });
     setListening(true);
-  }, [isWeb, WebCtor, lang, onFinalText]);
+  }, [isWeb, WebCtor, lang, onFinalText, onError]);
 
   const stop = useCallback(() => {
     if (isWeb) {

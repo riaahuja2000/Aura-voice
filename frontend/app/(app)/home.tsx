@@ -87,6 +87,12 @@ const NO_STT_LINE: Record<Lang, string> = {
   hng: "Is device par voice recognition available nahi hai.",
 };
 
+const MIC_DENIED_LINE: Record<Lang, string> = {
+  en: "Please allow microphone access for this site in your browser, then hold the orb and speak.",
+  hi: "कृपया अपने ब्राउज़र में इस साइट के लिए माइक्रोफ़ोन की अनुमति दें, फिर गोले को दबाकर बोलें।",
+  hng: "Kripya apne browser mein is site ke liye microphone allow karein, phir orb ko hold karke bolein.",
+};
+
 const DISCLOSURE_KEY = "aura_ai_disclosure_v1";
 const CAPTIONS_KEY = "aura_captions_on";
 
@@ -285,7 +291,19 @@ export default function VoiceHome() {
     [lang, speak],
   );
 
-  const stt = useVoiceSTT(lang, onFinal);
+  const stt = useVoiceSTT(
+    lang,
+    onFinal,
+    useCallback(
+      (code: string) => {
+        if (code === "not-allowed" || code === "service-not-allowed" || code === "permission") {
+          setPhase("idle");
+          speak(MIC_DENIED_LINE[lang]);
+        }
+      },
+      [lang, speak],
+    ),
+  );
   const sttRef = useRef(stt);
   sttRef.current = stt;
 
@@ -300,7 +318,17 @@ export default function VoiceHome() {
         if (cap === "1") setCaptions(true);
         if (!done) {
           await AsyncStorage.setItem(DISCLOSURE_KEY, "1");
-          setTimeout(() => speak(DISCLOSURE[lang]), 800);
+          if (Platform.OS === "web" && typeof document !== "undefined") {
+            // Browsers block audio before the first user gesture — speak the
+            // AI disclosure on the visitor's first interaction instead.
+            const handler = () => {
+              document.removeEventListener("pointerdown", handler);
+              setTimeout(() => speak(DISCLOSURE[lang]), 200);
+            };
+            document.addEventListener("pointerdown", handler, { once: true });
+          } else {
+            setTimeout(() => speak(DISCLOSURE[lang]), 800);
+          }
         }
       } catch {
         /* ignore */

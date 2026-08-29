@@ -49,6 +49,16 @@ Premium mobile-first remake of an occult voice oracle (velora-occult-voice.base4
   failed/unclear question log (db.failed_questions), saved-moments count.
 - speech.ts: pauseSpeak/resumeSpeak (iOS/web) + whisper option.
 
+## Implemented (2026-06 build 4 — Web/browser polish for Vercel)
+- speech.ts web engine: direct speechSynthesis with sentence chunking + 10s keep-alive nudge (fixes Chrome ~15s cutoff),
+  quality voice picking (Google/neural preferred), pause/resume + whisper on web.
+- voice-stt.ts: onError callback (native + web); "no-speech"/"aborted" silenced; permission denials surfaced.
+- home.tsx: spoken mic-permission-denied guidance (EN/HI/HNG); AI disclosure deferred to first user gesture on web (autoplay policy).
+- +html.tsx: title/description/theme-color/PWA meta. .gitignore: !.env.example so the template ships to GitHub.
+- Verified: `expo export --platform web` clean; browser E2E (login → orb → captions → disclosure speech → swipe refine) works.
+- NOTE: Emergent .emergent.host deploys of Expo apps only show the Expo Go QR page (platform limitation, confirmed by support).
+  Browser hosting path = Vercel (vercel.json + api/index.py + DEPLOYMENT.md already in repo). User must "Save to GitHub" then import on vercel.com.
+
 ## Backlog / Next
 - P1: Owner in-console live preview of branding before publish.
 - P2: Journal search/filter by topic; export a reading.
