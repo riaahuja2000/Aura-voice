@@ -19,6 +19,7 @@ import { useI18n } from "@/src/i18n";
 import { api, mediaUrl } from "@/src/api";
 import { useSettings } from "@/src/settings";
 import { Btn, Field, Txt, useToast } from "@/src/ui";
+import { BrandBackdrop } from "@/src/components/BrandBackdrop";
 
 const VOICES = ["shimmer", "coral", "nova", "sage", "fable", "alloy", "echo", "onyx", "ash"];
 const SPEEDS = [0.85, 0.95, 1.0, 1.15];
@@ -216,7 +217,7 @@ export default function Owner() {
   const maxCount = Math.max(1, ...((data?.last7 || []).map((d: any) => d.count) as number[]));
 
   return (
-    <View style={styles.root}>
+    <BrandBackdrop>
       <View style={[styles.header, { paddingTop: insets.top + SPACING.md }]}>
         <Txt font="displayBold" style={styles.title}>{t("owner_title")}</Txt>
         <Txt font="body" style={styles.subtitle}>{t("owner_subtitle")}</Txt>
@@ -432,7 +433,7 @@ export default function Owner() {
           </View>
         </View>
       </Modal>
-    </View>
+    </BrandBackdrop>
   );
 }
 
@@ -470,8 +471,8 @@ function BrandImage({ label, uri, busy, onPress, t, square }: any) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.surface },
-  header: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.lg, borderBottomWidth: 1, borderBottomColor: COLORS.divider },
+  root: { flex: 1 },
+  header: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.lg, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.08)" },
   title: { fontSize: 34, color: COLORS.onSurface },
   subtitle: { color: COLORS.onSurface3, fontSize: 13, marginTop: 2 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },

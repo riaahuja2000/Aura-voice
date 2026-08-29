@@ -1,43 +1,26 @@
-import React from "react";
-import { StyleSheet, View, ViewStyle } from "react-native";
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
-import { COLORS } from "@/theme";
-import { useSettings } from "@/src/settings";
-import { mediaUrl } from "@/src/api";
+// BrandBackdrop — now a starry cosmic backdrop used by every non-orb screen.
+// Kept as a thin wrapper around CosmicBackdrop so existing screens don't need
+// to change any imports.
 
-const LOCAL_BG = require("@/assets/brand/velora-crystal-bg.png");
+import React from "react";
+import { ViewStyle } from "react-native";
+import { CosmicBackdrop, type CosmicTheme } from "@/src/components/CosmicBackdrop";
 
 export function BrandBackdrop({
   children,
   style,
-  scrim = "heavy",
+  theme = "nebula",
+  // kept for API compat, ignored — the cosmic backdrop needs no scrim.
+  scrim: _scrim,
 }: {
   children?: React.ReactNode;
   style?: ViewStyle;
+  theme?: CosmicTheme;
   scrim?: "heavy" | "medium";
 }) {
-  const { settings } = useSettings();
-  const bg = settings.background_url ? { uri: mediaUrl(settings.background_url) } : LOCAL_BG;
-
-  const colors =
-    scrim === "heavy"
-      ? (["rgba(5,5,8,0.55)", "rgba(5,5,8,0.82)", COLORS.surface] as const)
-      : (["rgba(5,5,8,0.35)", "rgba(5,5,8,0.7)", "rgba(5,5,8,0.96)"] as const);
-
   return (
-    <View style={[styles.root, style]}>
-      <Image source={bg} style={StyleSheet.absoluteFill as any} contentFit="cover" transition={400} />
-      <LinearGradient
-        colors={colors}
-        locations={[0, 0.55, 1]}
-        style={StyleSheet.absoluteFill as any}
-      />
+    <CosmicBackdrop theme={theme} style={style}>
       {children}
-    </View>
+    </CosmicBackdrop>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.surface },
-});

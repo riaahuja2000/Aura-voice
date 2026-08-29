@@ -9,6 +9,7 @@ import { useAuth } from "@/src/auth";
 import { api } from "@/src/api";
 import { Btn, Field, Txt, useToast } from "@/src/ui";
 import { LangSwitcher } from "@/src/components/LangSwitcher";
+import { BrandBackdrop } from "@/src/components/BrandBackdrop";
 import { listVoices } from "@/src/speech";
 
 const SPEEDS = [0.85, 0.95, 1.0, 1.15];
@@ -81,7 +82,7 @@ export default function Account() {
   const initial = (user?.name || user?.email || "V").charAt(0).toUpperCase();
 
   return (
-    <View style={styles.root}>
+    <BrandBackdrop>
       <View style={[styles.header, { paddingTop: insets.top + SPACING.md }]}>
         <Txt font="displayBold" style={styles.title}>{t("account_title")}</Txt>
         <Txt font="body" style={styles.subtitle}>{t("account_subtitle")}</Txt>
@@ -155,13 +156,13 @@ export default function Account() {
 
         <Btn testID="account-logout" icon="log-out" label={t("sign_out")} onPress={doLogout} variant="outline" style={{ borderColor: COLORS.error }} />
       </ScrollView>
-    </View>
+    </BrandBackdrop>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.surface },
-  header: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.lg, borderBottomWidth: 1, borderBottomColor: COLORS.divider },
+  root: { flex: 1 },
+  header: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.lg, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.08)" },
   title: { fontSize: 34, color: COLORS.onSurface },
   subtitle: { color: COLORS.onSurface3, fontSize: 13, marginTop: 2 },
   identity: {
