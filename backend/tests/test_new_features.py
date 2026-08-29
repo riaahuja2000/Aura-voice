@@ -6,7 +6,7 @@ import uuid
 import pytest
 import requests
 
-BASE_URL = os.environ.get("EXPO_PUBLIC_BACKEND_URL", "https://mystique-voice-pro.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("EXPO_PUBLIC_BACKEND_URL", "https://aura-voice-oracle.preview.emergentagent.com").rstrip("/")
 API = BASE_URL + "/api"
 
 OWNER_EMAIL = "riaahuja2000@gmail.com"
