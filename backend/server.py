@@ -391,60 +391,170 @@ async def update_me(body: ProfileBody, user: dict = Depends(get_current_user)):
         user = await db.users.find_one({"id": user["id"]})
     return public_user(user)
 
-def _relevant_knowledge_text(question: str, text: str) -> str:
+def _relevant_knowledge_text(question: str, text: str, topics=None):
     import re
 
-    q = (question or "").lower().strip()
+    q = (question or "").strip().lower()
     raw = (text or "").strip()
 
     if not q or not raw:
-        return ""
+        return 0, ""
 
-    aliases = {
-        "shaadi": {"shaadi", "marriage", "wedding", "spouse", "partner", "matrimony"},
-        "marriage": {"shaadi", "marriage", "wedding", "spouse", "partner", "matrimony"},
-        "relationship": {"relationship", "relationships", "love", "romance", "partner", "spouse"},
-        "love": {"love", "relationship", "relationships", "romance", "partner"},
-        "timing": {"timing", "when", "period", "date", "month", "year", "time"},
-        "career": {"career", "job", "profession", "work", "business"},
-        "money": {"money", "finance", "financial", "wealth", "income"},
-        "health": {"health", "wellness", "body"},
-    }
-
-    stop = {
-        "meri", "mera", "mere", "mujhe", "hai", "hogi", "hoga",
-        "kab", "kya", "ka", "ki", "ke", "ko", "main", "mein",
-        "the", "a", "an", "is", "are", "to", "of", "and", "or",
-        "in", "on", "for", "with", "my", "me", "i"
-    }
-
-    question_words = {
-        w for w in re.findall(r"\w+", q, flags=re.UNICODE)
-        if len(w) > 2 and w not in stop
-    }
-
-    required_terms = set(question_words)
-
-    for key, terms in aliases.items():
-        if key in q:
-            required_terms.update(terms)
-
-    # Special handling for Hindi/Hinglish marriage questions.
-    if "shaadi" in q:
-        required_terms.update(
-            {"shaadi", "marriage", "wedding", "spouse", "partner", "matrimony"}
+    def words(value):
+        return set(
+            re.findall(
+                r"[a-zA-Z0-9\u0900-\u097F]+",
+                value.lower()
+            )
         )
 
-    junk = (
+    stop = {
+        "mera", "meri", "mere", "mujhe", "main",
+        "mein", "ka", "ki", "ke", "ko", "hai",
+        "hoga", "hogi", "honge", "kya", "kaisa",
+        "kaisi", "kaise", "batao", "please",
+
+        "the", "a", "an", "is", "are", "was",
+        "were", "to", "of", "and", "or", "in",
+        "on", "for", "with", "my", "me", "i",
+        "what", "how", "can", "will", "would",
+        "please", "tell"
+    }
+
+    families = {
+        "relationship": {
+            "shaadi", "marriage", "wedding",
+            "spouse", "husband", "wife",
+            "partner", "relationship", "love",
+            "romance", "matrimony"
+        },
+
+        "timing": {
+            "kab", "when", "timing", "time",
+            "date", "month", "year", "period",
+            "age", "dasha", "transit"
+        },
+
+        "daily": {
+            "aaj", "today", "daily",
+            "day", "din", "tomorrow", "kal"
+        },
+
+        "career": {
+            "career", "job", "naukri", "work",
+            "business", "profession", "promotion",
+            "interview", "office"
+        },
+
+        "money": {
+            "money", "paisa", "paise",
+            "finance", "financial", "wealth",
+            "income", "salary", "business",
+            "profit"
+        },
+
+        "health": {
+            "health", "sehat", "body",
+            "wellness", "healing", "energy",
+            "sleep", "stress"
+        },
+
+        "purpose": {
+            "purpose", "mission", "calling",
+            "direction", "life", "path"
+        },
+
+        "tarot": {
+            "tarot", "card", "cards",
+            "arcana", "spread"
+        },
+
+        "astrology": {
+            "astrology", "kundali", "horoscope",
+            "zodiac", "planet", "graha",
+            "lagna", "nakshatra", "dasha",
+            "transit", "birthchart", "chart"
+        },
+
+        "numerology": {
+            "numerology", "number", "numbers",
+            "mulank", "bhagyank", "lifepath",
+            "destiny", "name-number"
+        },
+
+        "aura": {
+            "aura", "energy", "vibration",
+            "vibrations", "field"
+        },
+
+        "crystals": {
+            "crystal", "crystals", "gemstone",
+            "stone", "stones"
+        },
+
+        "runes": {
+            "rune", "runes"
+        },
+
+        "palmistry": {
+            "palm", "palmistry", "hand",
+            "line", "lines"
+        },
+
+        "fengshui": {
+            "feng", "shui", "fengshui"
+        },
+
+        "kabbalah": {
+            "kabbalah", "kabbalistic"
+        },
+
+        "iching": {
+            "iching", "i-ching", "hexagram"
+        },
+
+        "mindfulness": {
+            "mindfulness", "meditation",
+            "calm", "breathing", "breath",
+            "journal", "journaling"
+        }
+    }
+
+    q_words = {
+        w for w in words(q)
+        if len(w) > 1 and w not in stop
+    }
+
+    triggered = []
+
+    for family, terms in families.items():
+        if q_words & terms:
+            triggered.append(family)
+
+    # Add detected Oracle topics as relevance signals.
+    topic_words = set()
+
+    for topic in (topics or []):
+        topic_words.update(words(str(topic)))
+
+    search_words = set(q_words)
+    search_words.update(topic_words)
+
+    for family in triggered:
+        search_words.update(families[family])
+
+    junk_phrases = (
         "world occult knowledge base",
         "velora intelligence library",
         "master reference",
         "current authoritative factual data",
         "when required",
         "table of contents",
-        "knowledge base",
         "copyright",
         "reference document",
+        "knowledge base",
+        "document purpose",
+        "introduction"
     )
 
     blocks = re.split(
@@ -455,50 +565,90 @@ def _relevant_knowledge_text(question: str, text: str) -> str:
     ranked = []
 
     for block in blocks:
-        clean = re.sub(r"\s+", " ", block).strip()
+        clean = re.sub(
+            r"\s+",
+            " ",
+            block
+        ).strip()
 
         if len(clean) < 25:
             continue
 
         low = clean.lower()
 
-        if any(x in low for x in junk):
+        if any(
+            junk in low
+            for junk in junk_phrases
+        ):
             continue
 
-        # CRITICAL:
-        # At least one genuine question-related term must appear.
-        matched_terms = [
-            term for term in required_terms
-            if term and term in low
-        ]
+        block_words = words(low)
 
-        if not matched_terms:
+        # Generic lexical relevance.
+        exact_overlap = block_words & q_words
+        expanded_overlap = block_words & search_words
+
+        if not expanded_overlap:
             continue
 
-        score = len(set(matched_terms)) * 10
+        # If question clearly has multiple intents,
+        # candidate must satisfy every important intent.
+        valid = True
+        family_hits = 0
 
-        # Prefer passages containing several relevant concepts.
-        words = set(
-            re.findall(r"\w+", low, flags=re.UNICODE)
+        for family in triggered:
+            family_terms = families[family]
+
+            if block_words & family_terms:
+                family_hits += 1
+            else:
+                valid = False
+                break
+
+        if triggered and not valid:
+            continue
+
+        score = 0
+
+        score += len(exact_overlap) * 12
+        score += len(expanded_overlap) * 3
+        score += family_hits * 15
+
+        # Exact wording receives a strong boost.
+        if q in low:
+            score += 50
+
+        # Prefer useful contextual text over headings.
+        if len(clean) >= 60:
+            score += 4
+
+        if len(clean) >= 120:
+            score += 3
+
+        ranked.append(
+            (score, clean)
         )
-        score += len(words & required_terms) * 3
-
-        ranked.append((score, clean))
 
     if not ranked:
-        return ""
+        return 0, ""
 
     ranked.sort(
-        key=lambda x: x[0],
+        key=lambda item: item[0],
         reverse=True
     )
 
     best_score, best_text = ranked[0]
 
-    if best_score < 10:
-        return ""
+    # Prevent weak/random matches.
+    minimum_score = 12
 
-    return best_text[:1200]
+    if triggered:
+        minimum_score = 18
+
+    if best_score < minimum_score:
+        return 0, ""
+
+    return best_score, best_text[:1400]
 # ---------------------------------------------------------------- oracle
 @api.post("/oracle/consult")
 async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
@@ -599,18 +749,83 @@ async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
             for phrase in blocked_phrases
         ):
             continue
+    question = (body.question or "").strip()
 
-        chosen = entry
-        chosen_answer = candidate_clean
-        break
+    if not question:
+        raise HTTPException(
+            400,
+            "Please ask a question."
+        )
 
-    if chosen_answer:
+    topics = oracle.detect_topics(question)
+
+    normalized_topics = {
+        str(t).strip().lower()
+        for t in topics
+        if str(t).strip()
+    }
+
+    best_score = 0
+    best_answer = ""
+    best_entry = None
+
+    cursor = db.knowledge_entries.find({
+        "deleted_at": None
+    }).limit(3000)
+
+    async for entry in cursor:
+        entry_text = str(
+            entry.get("text", "")
+        ).strip()
+
+        if not entry_text:
+            continue
+
+        score, candidate = _relevant_knowledge_text(
+            question,
+            entry_text,
+            topics
+        )
+
+        if not candidate:
+            continue
+
+        entry_topic = str(
+            entry.get("topic", "")
+        ).strip().lower()
+
+        entry_lang = str(
+            entry.get("lang", "")
+        ).strip().lower()
+
+        # Prefer the correct topic.
+        if (
+            entry_topic
+            and entry_topic in normalized_topics
+        ):
+            score += 10
+
+        # Prefer same-language knowledge,
+        # but still allow another language if relevant.
+        if (
+            entry_lang
+            and entry_lang == body.lang
+        ):
+            score += 4
+
+        if score > best_score:
+            best_score = score
+            best_answer = candidate
+            best_entry = entry
+
+    if best_answer:
         result = {
-            "answer": chosen_answer,
+            "answer": best_answer,
             "topics": topics,
             "primary": (
-                chosen.get("topic")
-                or (
+                best_entry.get("topic")
+                if best_entry
+                else (
                     topics[0]
                     if topics
                     else "General"
@@ -619,13 +834,11 @@ async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
         }
 
     else:
-        # No relevant uploaded knowledge was found.
-        # Never return random document content.
+        # No genuinely relevant uploaded context.
+        # Use the built-in Oracle instead of random file text.
         result = oracle.compose_answer(
             question,
-            body.lang,
-            topics,
-            {}
+            body.lang
         )
 
     now = datetime.now(
