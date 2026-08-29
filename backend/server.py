@@ -520,44 +520,118 @@ async def update_settings(body: SettingsBody, owner: dict = Depends(require_owne
 
 
 @api.post("/owner/upload")
-async def upload_branding(kind: str = Form(...), file: UploadFile = File(...), owner: dict = Depends(require_owner)):
-    if not _storage_ready():
-        raise HTTPException(503, "Image uploads need object storage. Set an OBJECT_STORAGE key, or edit branding text only.")
+async def upload_branding(
+    kind: str = Form(...),
+    file: UploadFile = File(...),
+    owner: dict = Depends(require_owner),
+):
     if kind not in ("logo", "background"):
-        raise HTTPException(400, "Invalid upload kind")
+        raise HTTPException(400, "Invalid image type.")
+
     ct = (file.content_type or "").lower()
-    allowed = {"image/png": "png", "image/jpeg": "jpg", "image/jpg": "jpg"}
+
+    allowed = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/jpg": "jpg",
+        "image/webp": "webp",
+    }
+
     if ct not in allowed:
-        raise HTTPException(400, "Only PNG and JPG/JPEG images are accepted.")
+        raise HTTPException(
+            400,
+            "Only PNG, JPG, JPEG or WEBP images are allowed."
+        )
+
     data = await file.read()
+
+    if not data:
+        raise HTTPException(400, "Empty image.")
+
     if len(data) > 8 * 1024 * 1024:
-        raise HTTPException(400, "Image must be under 8MB.")
+        raise HTTPException(
+            400,
+            "Image must be under 8 MB."
+        )
+
     ext = allowed[ct]
-    path = f"{APP_SLUG}/branding/{kind}-{uuid.uuid4().hex}.{ext}"
-    try:
-        await run_in_threadpool(_put_object, path, data, ct)
-    except Exception:
-        logger.exception("Upload failed")
-        raise HTTPException(502, "Upload failed. Try again.")
-    field = "logo_url" if kind == "logo" else "background_url"
+
+    path = (
+        f"{APP_SLUG}/branding/"
+        f"{kind}-{uuid.uuid4().hex}.{ext}"
+    )
+
+    # Store the image directly inside MongoDB.
+    # No Blob key, OIDC or Emergent key required.
+    await db.media_files.insert_one({
+        "id": str(uuid.uuid4()),
+        "path": path,
+        "kind": kind,
+        "content_type": ct,
+        "data": data,
+        "size": len(data),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+    field = (
+        "logo_url"
+        if kind == "logo"
+        else "background_url"
+    )
+
     url = f"/api/media?path={path}"
-    await db.settings.update_one({"_id": "app"},
-                                 {"$set": {field: url, "updated_at": datetime.now(timezone.utc).isoformat()}},
-                                 upsert=True)
-    return {"url": url}
+
+    await db.settings.update_one(
+        {"_id": "global"},
+        {
+            "$set": {
+                field: url,
+                "updated_at": datetime.now(
+                    timezone.utc
+                ).isoformat(),
+            }
+        },
+        upsert=True,
+    )
+
+    return {
+        "url": url,
+        "kind": kind,
+        "ok": True,
+    }
 
 
 @api.get("/media")
 async def get_media(path: str):
-    if not path.startswith(f"{APP_SLUG}/"):
-        raise HTTPException(400, "Bad path")
-    try:
-        data, ct = await run_in_threadpool(_get_object, path)
-    except Exception:
-        raise HTTPException(404, "Not found")
-    return Response(content=data, media_type=ct, headers={"Cache-Control": "public, max-age=86400"})
+    if not path.startswith(
+        f"{APP_SLUG}/branding/"
+    ):
+        raise HTTPException(400, "Bad path.")
 
+    media = await db.media_files.find_one(
+        {"path": path}
+    )
 
+    if not media:
+        raise HTTPException(404, "Not found.")
+
+    data = media.get("data")
+
+    if not data:
+        raise HTTPException(404, "Not found.")
+
+    content_type = media.get(
+        "content_type",
+        "application/octet-stream"
+    )
+
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={
+            "Cache-Control": "public, max-age=3600"
+        },
+    )
 # ---------------------------------------------------------------- owner console
 @api.get("/owner/overview")
 async def owner_overview(owner: dict = Depends(require_owner)):
