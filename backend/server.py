@@ -491,7 +491,7 @@ def _relevant_knowledge_text(question: str, text: str) -> str:
     return answer[:1400]
 # ---------------------------------------------------------------- oracle
 @api.post("/oracle/consult")
-async def consult(body: ConsultBody, user: dict = Depends(require_user)):
+async def consult(body: ConsultBody, user: dict = Depends(get_current_user)):
     question = (body.question or "").strip()
 
     if not question:
