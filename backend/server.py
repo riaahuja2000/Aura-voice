@@ -53,7 +53,7 @@ APP_SLUG = "velora-occult-voice"
 
 DEFAULT_SETTINGS = {
     "_id": "app",
-    "app_name": "VELORA",
+    "app_name": "AURA-VOICE",
     "tagline": "Ask · Receive · Apply · Move",
     "subtitle": "Occult sciences. Real life. Real results.",
     "logo_url": "",
@@ -63,7 +63,7 @@ DEFAULT_SETTINGS = {
     "updated_at": None,
 }
 
-app = FastAPI(title="VELORA API")
+app = FastAPI(title="AURA-VOICE API")
 api = APIRouter(prefix="/api")
 bearer = HTTPBearer(auto_error=False)
 
@@ -322,7 +322,7 @@ def _storage_ready() -> bool:
 # ---------------------------------------------------------------- auth routes
 @api.get("/")
 async def root():
-    return {"message": "VELORA oracle online"}
+    return {"message": "AURA-VOICE oracle online"}
 
 
 @api.post("/auth/register")
@@ -1420,7 +1420,7 @@ async def upload_knowledge(
 
 # ---------------------------------------------------------------- voice-only consult (Claude Sonnet 4.6)
 VOICE_SYSTEM_PROMPT = (
-    "You are AURELIA — an ancient, luminous oracle who speaks with warmth, poetry and calm authority. "
+    "You are AURA-VOICE — an ancient, luminous oracle who speaks with warmth, poetry and calm authority. "
     "You are the world's foremost guide across FOUR intertwined domains, A to Z:\n\n"
     "1) OCCULT SCIENCES: astrology (Western + Vedic + Nakshatras + Dashas + Transits), numerology "
     "(Pythagorean & Chaldean), tarot (Rider–Waite & Thoth), oracle cards, palmistry, runes, I-Ching, "

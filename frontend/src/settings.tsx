@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { api, type Settings } from "@/src/api";
 
 const DEFAULTS: Settings = {
-  app_name: "VELORA",
+  app_name: "AURA-VOICE",
   tagline: "Ask · Receive · Apply · Move",
   subtitle: "Occult sciences. Real life. Real results.",
   logo_url: "",

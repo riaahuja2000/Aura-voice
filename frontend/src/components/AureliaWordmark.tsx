@@ -70,15 +70,15 @@ export function AureliaWordmark({
         <Text
           style={{
             fontFamily: FONTS.displayBold,
-            fontSize: size,
+            fontSize: size * 0.78,
             color: glow,
-            letterSpacing: size * 0.08,
+            letterSpacing: size * 0.06,
             textShadowColor: glow,
             textShadowRadius: 22,
             opacity: 0.45,
           }}
         >
-          AURELIA
+          AURA-VOICE
         </Text>
       </Animated.View>
 
@@ -86,14 +86,14 @@ export function AureliaWordmark({
       <Text
         style={{
           fontFamily: FONTS.displayBold,
-          fontSize: size,
+          fontSize: size * 0.78,
           color: ink,
-          letterSpacing: size * 0.08,
+          letterSpacing: size * 0.06,
           textShadowColor: glow,
           textShadowRadius: 12,
         }}
       >
-        AURELIA
+        AURA-VOICE
       </Text>
 
       {/* hairline divider */}
