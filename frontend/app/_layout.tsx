@@ -1,12 +1,13 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { LogBox, View } from "react-native";
+import { LogBox, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { FONT_ASSETS, COLORS } from "@/theme";
@@ -48,6 +49,7 @@ export default function RootLayout() {
                     <Stack.Screen name="(app)" />
                   </Stack>
                 </View>
+                {Platform.OS === "web" && <SpeedInsights />}
               </ToastProvider>
             </AuthProvider>
           </SettingsProvider>
