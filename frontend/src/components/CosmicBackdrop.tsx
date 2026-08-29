@@ -3,7 +3,7 @@
 // Themes match the voice-orb home so the visual language stays consistent.
 
 import React, { useEffect, useMemo } from "react";
-import { StyleSheet, View, ViewStyle } from "react-native";
+import { Dimensions, StyleSheet, View, ViewStyle } from "react-native";
 import Animated, {
   Easing,
   interpolate,
@@ -13,6 +13,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
+import { ZodiacRing } from "@/src/components/ZodiacRing";
 
 export type CosmicTheme = "nebula" | "aura" | "crescent";
 
@@ -69,15 +70,19 @@ function Twinkle({
 export function CosmicBackdrop({
   theme = "nebula",
   starCount = 28,
+  showZodiac = true,
   children,
   style,
 }: {
   theme?: CosmicTheme;
   starCount?: number;
+  showZodiac?: boolean;
   children?: React.ReactNode;
   style?: ViewStyle;
 }) {
   const conf = BACKDROPS[theme];
+  const { width, height } = Dimensions.get("window");
+  const ringSize = Math.max(width, height) * 0.92;
 
   const stars = useMemo(
     () =>
@@ -88,6 +93,7 @@ export function CosmicBackdrop({
         size: 1 + Math.random() * 2.4,
         delay: Math.random() * 1800,
       })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [starCount, theme],
   );
 
@@ -101,6 +107,14 @@ export function CosmicBackdrop({
         style={styles.topGlow}
         pointerEvents="none"
       />
+
+      {/* Zodiac watermark — big and slow */}
+      {showZodiac ? (
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }]}>
+          <ZodiacRing size={ringSize} color={conf.accent} opacity={0.07} duration={120000} />
+          <ZodiacRing size={ringSize * 0.68} color={conf.accent} opacity={0.05} duration={90000} reverse />
+        </View>
+      ) : null}
 
       {stars.map((s) => (
         <Twinkle key={`${theme}-${s.id}`} top={s.top} left={s.left} size={s.size} delay={s.delay} accent={conf.accent} />

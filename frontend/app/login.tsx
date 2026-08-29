@@ -2,23 +2,18 @@ import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING } from "@/theme";
 import { useI18n } from "@/src/i18n";
 import { useAuth } from "@/src/auth";
-import { useSettings } from "@/src/settings";
-import { mediaUrl } from "@/src/api";
 import { Btn, Field, Txt, useToast } from "@/src/ui";
 import { BrandBackdrop } from "@/src/components/BrandBackdrop";
 import { LangSwitcher } from "@/src/components/LangSwitcher";
-
-const LOGO = require("@/assets/brand/velora-logo.png");
+import { AureliaWordmark } from "@/src/components/AureliaWordmark";
 
 export default function Login() {
   const { t } = useI18n();
   const { login } = useAuth();
-  const { settings } = useSettings();
   const toast = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -26,8 +21,6 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const logo = settings.logo_url ? { uri: mediaUrl(settings.logo_url) } : LOGO;
 
   const submit = async () => {
     if (!email.trim() || !password) {
@@ -57,9 +50,7 @@ export default function Login() {
         </View>
 
         <View style={styles.hero}>
-          <Image source={logo} style={styles.logo} contentFit="contain" />
-          <Txt font="displaySemibold" style={styles.title}>{t("welcome_back")}</Txt>
-          <Txt font="body" style={styles.subtitle}>{t("log_in_account")}</Txt>
+          <AureliaWordmark size={44} subtitle={t("log_in_account")} />
         </View>
 
         <View style={styles.form}>
@@ -111,10 +102,7 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   langRow: { alignItems: "flex-end", marginBottom: SPACING.lg },
-  hero: { alignItems: "center", marginBottom: SPACING.xxl },
-  logo: { width: 150, height: 150, marginBottom: SPACING.sm },
-  title: { fontSize: 40, color: COLORS.onSurface, lineHeight: 44 },
-  subtitle: { color: COLORS.onSurface3, fontSize: 14, marginTop: SPACING.xs, textAlign: "center" },
+  hero: { alignItems: "center", marginBottom: SPACING.xxl, marginTop: SPACING.xl },
   form: { gap: SPACING.md },
   link: { color: COLORS.gold, fontSize: 13 },
   footer: { flexDirection: "row", justifyContent: "center", marginTop: SPACING.xxl, alignItems: "center" },

@@ -24,6 +24,7 @@ import { useAuth } from "@/src/auth";
 import { api } from "@/src/api";
 import { speakText, stopSpeak, useSpeaking } from "@/src/speech";
 import { useVoiceSTT } from "@/src/voice-stt";
+import { ZodiacRing } from "@/src/components/ZodiacRing";
 
 // ------------------------------------------------------------------ THEMES
 type ThemeKey = "nebula" | "aura" | "crescent";
@@ -328,6 +329,12 @@ export default function VoiceHome() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg[0] }}>
       <LinearGradient colors={theme.bg} style={StyleSheet.absoluteFill} />
+
+      {/* Zodiac watermark rings */}
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }]}>
+        <ZodiacRing size={520} color={theme.accent} opacity={0.08} duration={140000} />
+        <ZodiacRing size={360} color={theme.accent} opacity={0.05} duration={95000} reverse />
+      </View>
 
       {/* Tiny stars */}
       {stars.map((s) => (

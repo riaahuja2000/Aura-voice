@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING } from "@/theme";
 import { useI18n } from "@/src/i18n";
@@ -10,8 +9,7 @@ import { useAuth } from "@/src/auth";
 import { Btn, Field, Txt, useToast } from "@/src/ui";
 import { BrandBackdrop } from "@/src/components/BrandBackdrop";
 import { LangSwitcher } from "@/src/components/LangSwitcher";
-
-const LOGO = require("@/assets/brand/velora-logo.png");
+import { AureliaWordmark } from "@/src/components/AureliaWordmark";
 
 export default function Register() {
   const { t } = useI18n();
@@ -62,9 +60,7 @@ export default function Register() {
         </View>
 
         <View style={styles.hero}>
-          <Image source={LOGO} style={styles.logo} contentFit="contain" />
-          <Txt font="displaySemibold" style={styles.title}>{t("create_account")}</Txt>
-          <Txt font="body" style={styles.subtitle}>{t("sign_up")}</Txt>
+          <AureliaWordmark size={40} subtitle={t("sign_up")} />
         </View>
 
         <View style={styles.form}>
@@ -95,10 +91,7 @@ export default function Register() {
 }
 
 const styles = StyleSheet.create({
-  hero: { alignItems: "center", marginBottom: SPACING.xl },
-  logo: { width: 120, height: 120, marginBottom: SPACING.sm },
-  title: { fontSize: 36, color: COLORS.onSurface, lineHeight: 40 },
-  subtitle: { color: COLORS.onSurface3, fontSize: 14, marginTop: SPACING.xs, textAlign: "center" },
+  hero: { alignItems: "center", marginBottom: SPACING.xl, marginTop: SPACING.xl },
   form: { gap: SPACING.md },
   link: { color: COLORS.gold, fontSize: 13 },
   footer: { flexDirection: "row", justifyContent: "center", marginTop: SPACING.xl, alignItems: "center" },
