@@ -1,0 +1,102 @@
+// TAROMAYA — Vedic Numerology backend knowledge. No interface data.
+export const VEDIC_SOURCE = { title: "Advanced Vedic Numerology", ruleSetVersion: "vedic-knowledge-v1.0", module: "Vedic Numerology (independent)" };
+export const NUMBER_PLANET = {1:"Sun",2:"Moon",3:"Jupiter",4:"Rahu/Uranus",5:"Mercury",6:"Venus",7:"Ketu/Neptune",8:"Saturn",9:"Mars"};
+export const NUMBER_PERSONALITY = {
+1:{positive:"Active, clear, dominant, confident, independent, generous, risk-taking, freedom-loving.",challenging:"Self-centredness, ego, refusal to take advice."},
+2:{positive:"Imaginative, peaceful, sensitive, kind, cooperative, intuitive, supportive, diplomatic, poetic.",challenging:"Over-sensitivity, indecision, mood swings, dependence on others' approval."},
+3:{positive:"Faith, purity, knowledge and wisdom; teaching, guiding, expressive and optimistic.",challenging:"Scattered focus, over-talking, preachiness, impatience with routine."},
+4:{positive:"Revolution and change, organisation, patience, dependability, unconventional thinking.",challenging:"Up-and-down patterns, sudden reversals, secrecy, restlessness of mind."},
+5:{positive:"Flexible, travel-oriented, adventurous, outgoing, social, financial and speech-oriented, energetic.",challenging:"Restlessness, inconsistency, over-speculation, difficulty finishing."},
+6:{positive:"Caring, healing, compassionate, nurturing, protective, romantic, harmonious, attractive, luxury-oriented.",challenging:"Possessiveness, material attachment, over-indulgence, worry for family."},
+7:{positive:"Perceptive, intellectual, spiritual, reserved, analytical, intuitive, introspective.",challenging:"Withdrawal, suspicion, over-analysis, difficulty expressing feelings."},
+8:{positive:"Accomplished, serious, disciplined, authoritative, professional, goal-oriented, prosperous.",challenging:"Materialism, anger, rigidity, delays that test patience."},
+9:{positive:"Physically strong, compassionate, humanitarian, dominant, courageous, emotional, strong-willed.",challenging:"Aggression, impulsiveness, conflict-proneness, burning energy too fast."}
+};
+export const MOOLANK_TRAITS = {
+1:{best:"Leads naturally, takes clean decisions, protects the people who depend on them.",worst:"Turns autocratic, dismisses advice, competes where cooperation was needed."},
+2:{best:"Peacemaker, sensitive partner, reads people accurately and heals situations.",worst:"Becomes clingy, over-emotional, avoids necessary confrontation."},
+3:{best:"Teacher and guide, disciplined with knowledge, keeps faith in tough phases.",worst:"Talks more than delivers, judges others, over-commits."},
+4:{best:"Original thinker who reorganises broken systems and stays loyal in crisis.",worst:"Chases shortcuts, hides plans, becomes stubborn and moody."},
+5:{best:"Quick learner, strong communicator, monetises opportunity and travel.",worst:"Jumps between plans, over-speculates, loses money on impulse."},
+6:{best:"Creates comfort and beauty, nurtures family, attracts goodwill.",worst:"Possessive, over-spends on luxury, sacrifices work for relationships."},
+7:{best:"Deep researcher and spiritual seeker with unusual intuition.",worst:"Isolates, doubts everyone, delays action while analysing."},
+8:{best:"Builds lasting structures through discipline, honours commitments.",worst:"Cold, rigid, work-obsessed, holds grudges."},
+9:{best:"Courageous protector who fights for a cause and finishes hard work.",worst:"Angry, impatient, damages relations in the heat of a moment."}
+};
+export const BHAGYANK_MEANING = {
+1:"Destiny of leadership, identity and self-made position; life pushes toward independent authority.",
+2:"Destiny of partnership, diplomacy and emotional intelligence; success arrives through people.",
+3:"Destiny of knowledge, teaching, guidance and expansion; growth through wisdom shared.",
+4:"Destiny of change, reform and unconventional routes; stability is built after disruption.",
+5:"Destiny of communication, commerce, travel and networks; income flows through movement.",
+6:"Destiny of family, comfort, art and service; responsibility for others is the recurring theme.",
+7:"Destiny of research, spirituality and inner work; recognition arrives late but is deep.",
+8:"Destiny of hard-earned material achievement; discipline and karma decide the timeline.",
+9:"Destiny of energy, courage and service; conflict resolved for a larger cause brings rise."
+};
+export const MASTER_DESTINY = {11:"Master Destiny 11 — illumination, inspiration and intuition. High nervous sensitivity; teaching, healing and vision work suit it. Retained as 11.",22:"Master Destiny 22 — master builder. Capacity to convert a large vision into a physical structure or institution. Retained as 22.",33:"Master Destiny 33 — master teacher/healer. Service, compassion and responsibility for a community. Retained as 33."};
+export const BEST_COMBINATIONS = [[1,5],[5,1],[2,1],[9,1],[1,9],[3,7],[7,3]];
+export const BAD_COMBINATIONS = [[2,8],[8,2],[1,8],[8,1],[3,6],[6,3],[9,4],[4,9],[6,2]];
+export const DC_PUNCH_LINES = {
+"1-4":"Sun with Rahu — bold decisions taken suddenly. Great for reform work, risky for shortcuts.",
+"1-8":"Sun with Saturn — authority earned slowly and with strain. Delays test the ego before they reward it.",
+"1-9":"Sun with Mars — commanding, competitive and action-first. Strong leadership, short temper.",
+"2-4":"Moon with Rahu — an emotional mind on an unstable circuit. Sleep, worry and confusion need managing.",
+"2-6":"Moon with Venus — soft, artistic, relationship-centred life. Comfort comes easily, discipline does not.",
+"2-8":"Moon with Saturn — emotional coldness or heaviness. Support systems must be built deliberately.",
+"2-9":"Moon with Mars — sensitive inside, sharp outside. Reactions come faster than reflection.",
+"3-6":"Jupiter with Venus — knowledge pulled toward pleasure. Values conflict with indulgence.",
+"3-7":"Jupiter with Ketu — a genuine spiritual and research combination. Wisdom over profit.",
+"4-4":"Double Rahu — intense unconventional drive. Extremes in fortune; grounding routines required.",
+"4-8":"Rahu with Saturn — the hardest karmic pair. Progress is real but slow, with repeated tests.",
+"4-9":"Rahu with Mars — high friction and accident-prone haste. Aggression must be channelled into work.",
+"5-8":"Mercury with Saturn — sharp commercial brain plus discipline. Excellent for structured business.",
+"6-6":"Double Venus — strong charm, art and luxury pull. Over-attachment to comfort is the caution."
+};
+export const REPETITION_RULES = {
+1:{double:"11 — strong will and self-belief; ego shows quickly.",triple:"111 — dominating personality, hard to advise.",more:"Excess 1 — rigidity and isolation from peers."},
+2:{double:"22 — high sensitivity and intuition; emotional swings.",triple:"222 — over-emotional and dependent on reassurance.",more:"Excess 2 — chronic indecision."},
+3:{double:"33 — sharp intelligence and expressive power.",triple:"333 — over-talking and scattered study.",more:"Excess 3 — knowledge without application."},
+4:{double:"44 — unconventional, stubborn, prone to sudden turns.",triple:"444 — restless mind, disturbed sleep, impulsive risk.",more:"Excess 4 — repeated instability."},
+5:{double:"55 — excellent commercial and communication ability.",triple:"555 — over-speculation and constant movement.",more:"Excess 5 — nothing is completed."},
+6:{double:"66 — magnetic charm, artistic and family-centred.",triple:"666 — indulgence and possessiveness.",more:"Excess 6 — comfort defeats ambition."},
+7:{double:"77 — deep intuition and research capacity.",triple:"777 — withdrawal from the world, suspicion.",more:"Excess 7 — analysis paralysis."},
+8:{double:"88 — disciplined and materially focused; heavy karma.",triple:"888 — rigidity, delay and repeated hard lessons.",more:"Excess 8 — work replaces life."},
+9:{double:"99 — powerful energy and courage.",triple:"999 — anger and conflict, accident-prone haste.",more:"Excess 9 — force used where patience was needed."}
+};
+export const MISSING_NUMBER = {
+1:{text:"Missing 1 — confidence and self-assertion must be built consciously; decisions are handed to others.",remedy:"Sun-related discipline: early rising, sunlight, taking one independent decision daily."},
+2:{text:"Missing 2 — emotional expression and cooperation are difficult; partnerships need effort.",remedy:"Moon-related care: water, silver, respect for the mother figure, regular sleep."},
+3:{text:"Missing 3 — structured learning and self-expression need training; faith wavers.",remedy:"Jupiter-related practice: study, teaching, respect for teachers and elders."},
+4:{text:"Missing 4 — practical organisation and follow-through are weak; plans stay unfinished.",remedy:"Rahu-related grounding: written routines, decluttering, feeding the needy."},
+5:{text:"Missing 5 — communication, networks and commercial instinct need deliberate development.",remedy:"Mercury-related practice: writing, green, learning a trade skill."},
+6:{text:"Missing 6 — comfort, aesthetics and family harmony require conscious attention.",remedy:"Venus-related care: cleanliness, art, service to women in the family."},
+7:{text:"Missing 7 — introspection and faith are underdeveloped; intuition ignored.",remedy:"Ketu-related practice: meditation, silence periods, charity without display."},
+8:{text:"Missing 8 — money discipline and long-term structure need to be learned.",remedy:"Saturn-related discipline: fixed savings, punctuality, service to workers."},
+9:{text:"Missing 9 — sustained energy and courage fluctuate; conflict is avoided rather than resolved.",remedy:"Mars-related practice: exercise, physical work, red, blood donation."}
+};
+export const LUCKY_COLOURS = {1:"Golden, orange, deep yellow",2:"White, cream, silver, light green",3:"Yellow, saffron, golden",4:"Grey, khaki, electric blue",5:"Green, light grey, turquoise",6:"White, pink, pastel blue",7:"Smoke grey, light yellow, sea green",8:"Dark blue, black, dark brown",9:"Red, coral, maroon"};
+export const PROFESSIONS = {
+1:{suitable:"Administration, government, entrepreneurship, leadership roles, jewellery, medicine.",avoid:"Subordinate roles with no authority and rigid hierarchies."},
+2:{suitable:"Counselling, HR, nursing, hospitality, arts, dairy, liquids, public relations.",avoid:"High-aggression sales targets and heavy machinery work."},
+3:{suitable:"Teaching, law, finance, consulting, publishing, spiritual guidance, banking.",avoid:"Purely mechanical repetitive labour."},
+4:{suitable:"Technology, research, aviation, imports/exports, electricals, unconventional ventures.",avoid:"Speculation, gambling and unregulated shortcuts."},
+5:{suitable:"Trading, marketing, media, travel, brokerage, writing, accounting, software.",avoid:"Isolated long-duration desk roles with no variety."},
+6:{suitable:"Fashion, interiors, beauty, food, entertainment, hotels, luxury retail.",avoid:"Harsh, unaesthetic and conflict-heavy environments."},
+7:{suitable:"Research, spirituality, analytics, psychology, chemicals, occult sciences.",avoid:"Front-line aggressive selling."},
+8:{suitable:"Real estate, mining, iron/steel, law, contracting, insurance, administration.",avoid:"Fast-money schemes and unstructured freelancing."},
+9:{suitable:"Defence, sports, surgery, engineering, real estate, fire/energy sectors.",avoid:"Slow bureaucratic roles that suppress action."}
+};
+export const MARRIAGE_COMPATIBILITY = {1:"Harmonious with 1, 2, 4, 5, 9. Strained with 8.",2:"Harmonious with 1, 2, 5, 7. Strained with 8 and 9.",3:"Harmonious with 3, 5, 7, 9. Strained with 6.",4:"Harmonious with 1, 5, 6, 7. Strained with 8 and 9.",5:"Harmonious with 1, 4, 5, 6, 9. Rarely hostile with anyone.",6:"Harmonious with 4, 5, 6, 8, 9. Strained with 3.",7:"Harmonious with 2, 3, 4, 7. Strained with 9.",8:"Harmonious with 4, 5, 6, 8. Strained with 1, 2 and 9.",9:"Harmonious with 1, 3, 5, 6, 9. Strained with 2, 4 and 7."};
+export const REMEDY_LAYER = {
+1:{vedic:"Offer water to the Sun at sunrise; respect the father figure.",karma:"Take responsibility for one decision you have been avoiding."},
+2:{vedic:"Keep silver or white near you; honour the mother figure.",karma:"Give emotional time to someone who depends on you."},
+3:{vedic:"Respect teachers and elders; yellow on Thursdays.",karma:"Teach or share what you know without charging for it."},
+4:{vedic:"Feed stray animals; keep the home decluttered.",karma:"Complete an unfinished commitment before starting anything new."},
+5:{vedic:"Green items and Mercury-day study; keep speech clean.",karma:"Keep one promise you made casually."},
+6:{vedic:"Cleanliness, fragrance and art in the home; serve women in the family.",karma:"Spend on someone else before spending on comfort."},
+7:{vedic:"Meditation, silence and anonymous charity.",karma:"Forgive one long-held grudge."},
+8:{vedic:"Serve workers and the elderly; discipline in savings.",karma:"Pay a pending due or debt on time."},
+9:{vedic:"Physical exercise; donate blood; red on Tuesdays.",karma:"Resolve one conflict without raising your voice."}
+};
+export const SAFETY = ["Use calculations first and knowledge only for interpretation.","Do not import Dasha/Antardasha/Mahadasha logic here.","Do not substitute Western Lo Shu rules.","Give remedies only when asked.","Never guarantee profession, marriage outcome, health or life events from numerology."];
