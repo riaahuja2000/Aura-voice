@@ -7,6 +7,8 @@ origin for both the SPA and /api routes.
 """
 from __future__ import annotations
 
+import inspect
+import logging
 import sys
 from pathlib import Path
 
@@ -21,10 +23,43 @@ _DIST = _ROOT / "frontend" / "dist"
 if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
-from server import app as backend_app  # noqa: E402
+import server as backend_server  # noqa: E402
+
+backend_app = backend_server.app
+logger = logging.getLogger("aura_voice.vercel")
+
+# Keep the original backend startup behavior, but do not let a temporary
+# external-service failure (for example Atlas network access) make the entire
+# Vercel function fail before the frontend can load.
+_original_startup_handlers = list(backend_app.router.on_startup)
+backend_app.router.on_startup.clear()
+
+
+@backend_app.on_event("startup")
+async def _resilient_vercel_startup():
+    for handler in _original_startup_handlers:
+        try:
+            result = handler()
+            if inspect.isawaitable(result):
+                await result
+        except Exception as exc:
+            logger.exception("Aura Voice startup dependency failed: %s", exc)
+
 
 # Explicit top-level assignment is required by Vercel's Python runtime.
 app = backend_app
+
+
+@app.get("/api/health/db", include_in_schema=False)
+async def vercel_db_health():
+    """Internal-safe database reachability check without exposing credentials."""
+    try:
+        await backend_server.client.admin.command("ping")
+        return {"database": "ok"}
+    except Exception as exc:
+        logger.exception("Aura Voice MongoDB health check failed: %s", exc)
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {type(exc).__name__}")
+
 
 # The Expo export is generated during the Vercel build and bundled into this
 # function via vercel.json includeFiles. Existing /api routes were registered
