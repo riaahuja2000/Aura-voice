@@ -2,8 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "installCommand": "cd frontend && yarn install --frozen-lockfile",
-  "buildCommand": "cd frontend && npx expo export --platform web --output-dir dist",
-  "outputDirectory": "frontend/dist",
+  "buildCommand": "cd frontend && npx expo export --platform web --output-dir ../public",
   "functions": {
     "api/index.py": {
       "includeFiles": "backend/**",
