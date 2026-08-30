@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "cd frontend && yarn install --frozen-lockfile && npx expo export --platform web --output-dir dist",
+  "buildCommand": "cd frontend && yarn install --frozen-lockfile && npx expo export --platform web --output-dir dist && node scripts/post-export-brand.js",
   "functions": {
     "api/index.py": {
       "includeFiles": "{backend/**,frontend/dist/**}",
