@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -59,6 +60,15 @@ async def vercel_db_health():
     except Exception as exc:
         logger.exception("Aura Voice MongoDB health check failed: %s", exc)
         raise HTTPException(status_code=503, detail=f"Database unavailable: {type(exc).__name__}")
+
+
+@app.get("/api/health/blob", include_in_schema=False)
+async def vercel_blob_health():
+    """Report only whether Vercel Blob prerequisites are present; never expose secrets."""
+    return {
+        "blob_store_configured": bool((os.getenv("BLOB_STORE_ID") or "").strip()),
+        "vercel_oidc_available": bool((os.getenv("VERCEL_OIDC_TOKEN") or "").strip()),
+    }
 
 
 # The Expo export is generated during the Vercel build and bundled into this
