@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-30",
+  "policy": {
+    "backend_only": true,
+    "source_projects_unchanged": true,
+    "excluded": [
+      "UI/interface/layout/theme/media assets",
+      "users/auth/profile/contact data",
+      "payments/subscriptions/billing",
+      "sessions/conversations/readings/bookmarks",
+      "analytics/reports/audit logs",
+      "secrets/credentials/environment values"
+    ],
+    "safety": "Occult/numerology/tarot material is traditional or symbolic reference, never guaranteed medical, legal, financial or factual prediction."
+  },
+  "sources": {
+    "taromaya-numerology": {
+      "url": "https://taromaya-numerology.lovable.app",
+      "lovable_project_id": "338f71cb-3fdb-45e0-a742-edaa8e8edada",
+      "semantic_modules": [
+        "Western Numerology (Lo Shu Grid)",
+        "Vedic Numerology",
+        "Mobile Numerology",
+        "Vedic Dasha Numerology",
+        "Kabbalah Numerology",
+        "Kabbalah Modern Numerology",
+        "Name Numerology",
+        "Vastu",
+        "Vastu Remedies",
+        "Vastu Factory / Business"
+      ],
+      "current_vedic_rules": [
+        {"rule_code":"PROP001","category":"Property","name":"Property Favourable","trigger_numbers":[2,8,5],"condition":"all","priority":"High","confidence":90,"result":"Property Favourable","answer":"The chart supports property acquisition.","recommendation":"Suitable for purchasing property.","avoid":"Legal disputes.","remedy":"None","source":"Giaa Knowledge Base"},
+        {"rule_code":"PROP002","category":"Property","name":"Property Challenges","trigger_numbers":[2,5],"condition":"all","priority":"High","confidence":90,"result":"Property Challenges","answer":"The chart indicates caution regarding property matters.","recommendation":"Verify all documents before purchase.","avoid":"Impulsive buying.","remedy":"None","source":"Giaa Knowledge Base"},
+        {"rule_code":"PROP003","category":"Property","name":"Land Purchase Suitable","trigger_numbers":[2,5,8],"condition":"all","priority":"Medium","confidence":85,"result":"Land Purchase Suitable","answer":"The chart supports land investment.","recommendation":"Long-term ownership is preferable.","avoid":"Disputed land.","remedy":"None","source":"Giaa Knowledge Base"},
+        {"rule_code":"PROP004","category":"Property","name":"Property Purchase Support","trigger_numbers":[3],"condition":"all","priority":"Medium","confidence":80,"result":"Property Purchase Support","answer":"The chart supports purchasing property.","recommendation":"Good period for acquisition.","avoid":"Financial overextension.","remedy":"None","source":"Giaa Knowledge Base"},
+        {"rule_code":"PROP005","category":"Property","name":"Electrical Renovation","trigger_numbers":[4],"condition":"all","priority":"Medium","confidence":75,"result":"Electrical Renovation","answer":"The chart highlights electrical improvements or modifications.","recommendation":"Complete electrical work before major renovations.","avoid":"Poor quality workmanship.","remedy":"None","source":"Giaa Knowledge Base"},
+        {"rule_code":"PROP006","category":"Property","name":"Renovation Suitable","trigger_numbers":[6],"condition":"all","priority":"Medium","confidence":80,"result":"Renovation Suitable","answer":"The chart supports renovation activities.","recommendation":"Focus on beautification and comfort.","avoid":"Unplanned expenses.","remedy":"None","source":"Giaa Knowledge Base"},
+        {"rule_code":"SM001","category":"Share Market","name":"Share Market Not Recommended","trigger_numbers":[2,4,7],"condition":"all","priority":"High","confidence":95,"result":"Share Market Not Recommended","answer":"The calculated chart does not favour Share Market participation.","recommendation":"Choose long-term wealth creation instead of speculative trading.","avoid":"Intraday, F&O, High Risk Trading, Betting","remedy":"None","source":"Giaa Knowledge Base"},
+        {"rule_code":"SM002","category":"Share Market","name":"Share Market Suitable","trigger_numbers":[3,8],"condition":"all","priority":"Medium","confidence":80,"result":"Share Market Suitable","answer":"The calculated chart supports Share Market participation.","recommendation":"Invest with discipline and patience.","avoid":"Emotional decisions.","remedy":"Donate 10% of profits.","source":"Giaa Knowledge Base"},
+        {"rule_code":"SM003","category":"Share Market","name":"Excellent Share Market Potential","trigger_numbers":[1,5,3,8,9],"condition":"any_n","min_matches":3,"compulsory_numbers":[5],"priority":"Very High","confidence":99,"result":"Excellent Share Market Potential","answer":"The chart shows strong investment potential.","recommendation":"Follow disciplined investment strategies.","avoid":"Greed and overconfidence.","remedy":"None","source":"Giaa Knowledge Base"},
+        {"rule_code":"SM004","category":"Share Market","name":"Suitable for Betting","trigger_numbers":[3,6,5],"condition":"all","priority":"High","confidence":90,"result":"Suitable for Betting","answer":"The chart indicates favourable combinations for calculated risk activities.","recommendation":"Exercise financial discipline.","avoid":"Emotional betting.","remedy":"None","source":"Giaa Knowledge Base"}
+      ],
+      "lo_shu": {
+        "grid": [[4,9,2],[3,5,7],[8,1,6]],
+        "numbers": {
+          "1":{"planet":"Sun","direction":"North","element":"Water","area":"Career & Planning"},
+          "2":{"planet":"Moon","direction":"South West","element":"Earth","area":"Marriage, Happiness"},
+          "3":{"planet":"Jupiter","direction":"East","element":"Wood","area":"Family, Growth, Wisdom"},
+          "4":{"planet":"Rahu","direction":"South East","element":"Wood","area":"Wealth and Prosperity"},
+          "5":{"planet":"Mercury","direction":"Center","element":"Earth","area":"Strength and Stability"},
+          "6":{"planet":"Venus","direction":"North West","element":"Metal","area":"Helpful People, Friends, Foreign"},
+          "7":{"planet":"Ketu","direction":"West","element":"Metal","area":"Creativity and Children"},
+          "8":{"planet":"Saturn","direction":"North East","element":"Earth","area":"Knowledge and Education"},
+          "9":{"planet":"Mars","direction":"South","element":"Fire","area":"Fame and Energy"}
+        },
+        "planes": {"Mental":[4,9,2],"Emotional":[3,5,7],"Physical":[8,1,6],"Thought":[4,3,8],"Will":[9,5,1],"Action":[2,7,6],"Golden":[4,5,6],"Silver":[8,5,2]},
+        "arrows_present": {"492":"Intellect","357":"Emotional Balance","816":"Practicality","438":"Planning","951":"Willpower","276":"Sensitivity","456":"Determination","258":"Spirituality"},
+        "arrows_missing": {"492":"Poor Memory","357":"Scepticism","816":"Frustration","438":"Poor Planning","951":"Indecision","276":"Loneliness","456":"Hesitancy","258":"Emotional Sensitivity"}
+      },
+      "vedic_core": {
+        "number_planet":{"1":"Sun","2":"Moon","3":"Jupiter","4":"Rahu/Uranus","5":"Mercury","6":"Venus","7":"Ketu/Neptune","8":"Saturn","9":"Mars"},
+        "best_combinations":["1-5","5-1","2-1","9-1","1-9","3-7","7-3"],
+        "challenging_combinations":["2-8","8-2","1-8","8-1","3-6","6-3","9-4","4-9","6-2"],
+        "master_destiny":{"11":"illumination, inspiration and intuition","22":"master builder","33":"master teacher/healer"}
+      }
+    },
+    "taromaya-tarot": {
+      "url": "https://taromaya-tarot.lovable.app",
+      "lovable_project_id": "933770a4-d6d9-40ae-aea0-6245eedc2220",
+      "semantic_modules": ["Tarot","Oracle","Vedic Numerology","AI PNTO","Numerology","Astrology","Nakshatra","Booklets","Learning Modules","Courses","Journals"],
+      "current_resource_counts": {"booklet":16,"card":324,"deck":1,"nakshatra_card":27},
+      "decks": {
+        "Rider Waite":{"categories":{"Major Arcana":22,"Minor Arcana":40,"Court Cards":16}},
+        "health-deck":{"categories":{"Major Arcana":22,"Minor Arcana":40,"Court Cards":16}},
+        "lost-and-found-deck":{"categories":{"Major Arcana":22,"Minor Arcana":41,"Court Cards":16}},
+        "soulmates-deck":{"categories":{"Major Arcana":90}}
+      },
+      "nakshatra_panel_cards": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27],
+      "booklet_categories": ["DIVORCE / SEPARATION","Negative Energy","Third Party","Love & Relationship","Commitment & Marriage","Ex & Reconciliation","Pregnancy & Baby","Health & Well-being","Career & Job","Business","Money & Finance","Share Market & Trading","Betting","Sports","Legal / Court","Property","Education / Exams","Travel / Foreign","Family","Friendship","Communication","Hidden / Secret","Cheating / Betrayal","Spiritual / Intuitive","Remedy / Solution","Timing","Final Outcome"],
+      "astrology_core": {
+        "luna": {
+          "tithis":["Pratipada","Dwitiya","Tritiya","Chaturthi","Panchami","Shashthi","Saptami","Ashtami","Navami","Dashami","Ekadashi","Dwadashi","Trayodashi","Chaturdashi","Purnima","Amavasya"],
+          "nakshatras":["Ashwini","Bharani","Krittika","Rohini","Mrigashira","Ardra","Punarvasu","Pushya","Ashlesha","Magha","Purva Phalguni","Uttara Phalguni","Hasta","Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Mula","Purva Ashadha","Uttara Ashadha","Shravana","Dhanishtha","Shatabhisha","Purva Bhadrapada","Uttara Bhadrapada","Revati"],
+          "choghadiya":{"favourable":["Amrit","Shubh","Labh"],"movement":["Char/Chal"],"avoid_for_important_beginnings":["Kaal","Rog","Udveg"]},
+          "rahu_kaal":"Traditionally avoided for beginning important activities; not a prohibition against routine work."
+        }
+      }
+    }
+  }
+}
