@@ -26,12 +26,29 @@ if str(_BACKEND) not in sys.path:
 
 import server as backend_server  # noqa: E402
 
-backend_app = backend_server.app
 logger = logging.getLogger("aura_voice.vercel")
 
+# Prefer a Vercel Marketplace PostgreSQL/Neon database whenever it is present.
+# The compatibility layer keeps the existing Mongo-style API routes unchanged.
+_database_url = (
+    os.getenv("DATABASE_URL")
+    or os.getenv("POSTGRES_URL")
+    or os.getenv("NEON_DATABASE_URL")
+    or ""
+).strip()
+if _database_url:
+    from db_compat import PostgresDocumentClient  # noqa: E402
+
+    _pg_client = PostgresDocumentClient(_database_url)
+    backend_server.client = _pg_client
+    backend_server.db = _pg_client[(os.getenv("DB_NAME") or "aura_voice").strip()]
+    logger.info("Aura Voice persistent store: PostgreSQL/Neon")
+
+backend_app = backend_server.app
+
 # Keep the original backend startup behavior, but do not let a temporary
-# external-service failure (for example Atlas network access) make the entire
-# Vercel function fail before the frontend can load.
+# external-service failure make the entire Vercel function fail before the
+# frontend can load.
 _original_startup_handlers = list(backend_app.router.on_startup)
 backend_app.router.on_startup.clear()
 
@@ -56,9 +73,9 @@ async def vercel_db_health():
     """Internal-safe database reachability check without exposing credentials."""
     try:
         await backend_server.client.admin.command("ping")
-        return {"database": "ok"}
+        return {"database": "ok", "engine": "postgres" if _database_url else "mongodb"}
     except Exception as exc:
-        logger.exception("Aura Voice MongoDB health check failed: %s", exc)
+        logger.exception("Aura Voice database health check failed: %s", exc)
         raise HTTPException(status_code=503, detail=f"Database unavailable: {type(exc).__name__}")
 
 
@@ -76,7 +93,7 @@ async def vercel_storage_options():
     """Report presence of common persistent Vercel Marketplace data stores without secrets."""
     return {
         "postgres": bool((os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URL") or "").strip()),
-        "neon": bool((os.getenv("NEON_DATABASE_URL") or "").strip()),
+        "neon": bool((os.getenv("NEON_DATABASE_URL") or os.getenv("DATABASE_URL") or "").strip()),
         "vercel_kv": bool((os.getenv("KV_REST_API_URL") or os.getenv("KV_URL") or "").strip()),
         "upstash_redis": bool((os.getenv("UPSTASH_REDIS_REST_URL") or os.getenv("UPSTASH_REDIS_REST_TOKEN") or "").strip()),
         "blob": bool((os.getenv("BLOB_STORE_ID") or "").strip()),
