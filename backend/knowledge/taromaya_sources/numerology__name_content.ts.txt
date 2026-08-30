@@ -1,0 +1,38 @@
+// Taromaya Name Numerology semantic source snapshot. UI omitted.
+KNOWLEDGE_SOURCE: Approved Vedic Numerology source — Chaldean Name Numerology chart & Name Number compounds v1.0.
+COMPOUND_MEANINGS:
+10 Wheel of fortune — rise and fall by one's own effort; honour or dishonour depends on conduct.
+11 Hidden trials and treachery from others; requires caution, patience and self-reliance.
+12 The sacrifice — the victim of others' plans; learn to read people before committing.
+13 Upheaval and change; power that must be used constructively, otherwise destruction follows. Warning number, not simply unlucky.
+14 Movement, travel, dealings and speculation; risk from over-confidence and from others' mistakes.
+15 Magnetism, charm and material gain; strong occult attraction, misuse brings downfall.
+16 Shattered plans and sudden fall; demands humility, foresight and careful planning.
+17 The star of the magi — spiritual strength rising above trials; enduring name and legacy.
+18 Materialism fighting the spiritual; quarrels, deception and family conflict; caution advised.
+19 The prince of heaven — success, honour and happiness; one of the most favourable compounds.
+20 The awakening — a call to new purpose and action, often delays before the higher aim is achieved.
+21 The crown of the magi — advancement, honour and victory after struggle.
+22 The illusion — good nature misled; warns against living in a false picture of reality.
+23 The royal star of the lion — help from superiors, protection and success in plans.
+24 Gain through love, opposite sex and influential associations; favourable for partnerships.
+25 Strength gained through experience; success after early trials and hard lessons.
+26 Grave warnings of partnership loss, bad advice and speculation; save and diversify.
+27 The sceptre — authority, command and reward for intellect and creative work.
+28 Promise contradicted; gains lost through trust in others; must plan for reversals.
+29 Uncertainty, deception and trials through relationships; needs careful discrimination.
+30 Thoughtful deduction and mental superiority; power that is neither fortunate nor unfortunate by itself.
+31 Self-contained, isolated and detached; spiritual rather than material orientation.
+32 Magical power of communication; success while sticking to one's own judgement.
+33 Carries the same interpretation as 24 — gain through influential and affectionate associations.
+NUMBER_PROFILE:
+1 Sun | leadership, individuality, authority | initiative, confidence, command | ego, rigidity, dominance | administration, government, own venture.
+2 Moon | sensitivity, cooperation, imagination | diplomacy, intuition, care | mood swings, indecision, dependency | partnerships, hospitality, counselling, liquids/dairy trade.
+3 Jupiter | wisdom, expansion, teaching | knowledge, optimism, guidance | over-promising, preachiness | teaching, law, finance, advisory.
+4 Rahu | unconventional drive, systems, sudden change | strategy, research, technology | restlessness, shortcuts, confusion | technology, research, import/export, media.
+5 Mercury | communication, trade, adaptability | quick mind, networking, negotiation | scattered focus, nervousness | business, marketing, writing, accounts.
+6 Venus | beauty, comfort, relationships | charm, aesthetics, harmony | indulgence, avoidance of conflict | arts, fashion, luxury, hospitality, design.
+7 Ketu | research, spirituality, detachment | depth, analysis, intuition | isolation, secrecy, doubt | research, healing, spirituality, analytics.
+8 Saturn | discipline, structure, long effort | endurance, responsibility, scale | delays, heaviness, rigidity | industry, real estate, law, mining, logistics.
+9 Mars | energy, courage, action | drive, protection, execution | anger, impatience, conflict | defence, sports, surgery, engineering, real estate.
+FIRST_LETTER_NOTE: The starting letter carries its own Chaldean value and colours how the name is first received. It is read separately from the full Name Number.
