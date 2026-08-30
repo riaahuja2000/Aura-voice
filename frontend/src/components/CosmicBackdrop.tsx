@@ -1,7 +1,4 @@
-// Reusable cosmic starry backdrop used across every screen of the app.
-// Renders a deep-space gradient + twinkling ambient stars.
-// Themes match the voice-orb home so the visual language stays consistent.
-
+// Reusable Aura Voice celestial backdrop used across non-orb screens.
 import React, { useEffect, useMemo } from "react";
 import { Dimensions, StyleSheet, View, ViewStyle } from "react-native";
 import Animated, {
@@ -17,37 +14,25 @@ import { ZodiacRing } from "@/src/components/ZodiacRing";
 
 export type CosmicTheme = "nebula" | "aura" | "crescent";
 
-const BACKDROPS: Record<CosmicTheme, { bg: [string, string, string]; accent: string }> = {
-  nebula:   { bg: ["#05000E", "#0B0322", "#1A0733"], accent: "#C9B8FF" },
-  aura:     { bg: ["#0A0002", "#170603", "#2A0A0A"], accent: "#FFD9A8" },
-  crescent: { bg: ["#02030A", "#0A0F1F", "#151B2D"], accent: "#DDE4FF" },
+const BACKDROPS: Record<CosmicTheme, { bg: [string, string, string]; accent: string; secondary: string }> = {
+  nebula:   { bg: ["#070713", "#110D28", "#21143A"], accent: "#C8B3FF", secondary: "#9DE2DD" },
+  aura:     { bg: ["#0E0811", "#241426", "#3A2031"], accent: "#E2B19F", secondary: "#C8B3FF" },
+  crescent: { bg: ["#060811", "#11172B", "#202A42"], accent: "#EEF0FF", secondary: "#9DE2DD" },
 };
 
-function Twinkle({
-  top,
-  left,
-  size,
-  delay,
-  accent,
-}: {
-  top: number;
-  left: number;
-  size: number;
-  delay: number;
-  accent: string;
-}) {
+function Twinkle({ top, left, size, delay, accent }: { top: number; left: number; size: number; delay: number; accent: string }) {
   const v = useSharedValue(0);
   useEffect(() => {
     const t = setTimeout(() => {
       v.value = withRepeat(
-        withTiming(1, { duration: 1600 + Math.random() * 1600, easing: Easing.inOut(Easing.quad) }),
+        withTiming(1, { duration: 1700 + Math.random() * 1500, easing: Easing.inOut(Easing.quad) }),
         -1,
         true,
       );
     }, delay);
     return () => clearTimeout(t);
   }, [v, delay]);
-  const s = useAnimatedStyle(() => ({ opacity: interpolate(v.value, [0, 1], [0.12, 0.9]) }));
+  const s = useAnimatedStyle(() => ({ opacity: interpolate(v.value, [0, 1], [0.08, 0.72]) }));
   return (
     <Animated.View
       pointerEvents="none"
@@ -69,7 +54,7 @@ function Twinkle({
 
 export function CosmicBackdrop({
   theme = "nebula",
-  starCount = 28,
+  starCount = 24,
   showZodiac = true,
   children,
   style,
@@ -90,10 +75,9 @@ export function CosmicBackdrop({
         id: i,
         top: Math.random() * 100,
         left: Math.random() * 100,
-        size: 1 + Math.random() * 2.4,
-        delay: Math.random() * 1800,
+        size: 1 + Math.random() * 2.1,
+        delay: Math.random() * 1900,
       })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [starCount, theme],
   );
 
@@ -101,18 +85,21 @@ export function CosmicBackdrop({
     <View style={[{ flex: 1, backgroundColor: conf.bg[0] }, style]}>
       <LinearGradient colors={conf.bg} style={StyleSheet.absoluteFill} />
 
-      {/* Soft radial glow near top-center */}
       <LinearGradient
-        colors={[conf.accent + "22", "transparent"]}
+        colors={[conf.accent + "24", conf.secondary + "0C", "transparent"]}
         style={styles.topGlow}
         pointerEvents="none"
       />
+      <LinearGradient
+        colors={["transparent", conf.secondary + "0A", conf.accent + "10"]}
+        style={styles.bottomGlow}
+        pointerEvents="none"
+      />
 
-      {/* Zodiac watermark — big and slow */}
       {showZodiac ? (
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }]}>
-          <ZodiacRing size={ringSize} color={conf.accent} opacity={0.07} duration={120000} />
-          <ZodiacRing size={ringSize * 0.68} color={conf.accent} opacity={0.05} duration={90000} reverse />
+          <ZodiacRing size={ringSize} color={conf.accent} opacity={0.055} duration={135000} />
+          <ZodiacRing size={ringSize * 0.66} color={conf.secondary} opacity={0.035} duration={98000} reverse />
         </View>
       ) : null}
 
@@ -129,10 +116,19 @@ const styles = StyleSheet.create({
   topGlow: {
     position: "absolute",
     top: -120,
-    left: -60,
-    right: -60,
+    left: -70,
+    right: -70,
+    height: 360,
+    borderBottomLeftRadius: 220,
+    borderBottomRightRadius: 220,
+  },
+  bottomGlow: {
+    position: "absolute",
+    bottom: -150,
+    left: -100,
+    right: -100,
     height: 340,
-    borderBottomLeftRadius: 200,
-    borderBottomRightRadius: 200,
+    borderTopLeftRadius: 240,
+    borderTopRightRadius: 240,
   },
 });
