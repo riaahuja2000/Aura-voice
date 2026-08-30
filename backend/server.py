@@ -36,16 +36,18 @@ mongo_url = os.environ["MONGO_URL"]
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ["DB_NAME"]]
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "velora-dev-secret-change-me")
+JWT_SECRET = os.environ["JWT_SECRET"]
 JWT_ALG = "HS256"
 TOKEN_DAYS = 30
 
-OWNER_EMAIL = os.environ.get("OWNER_EMAIL", "riaahuja2000@gmail.com").strip().lower()
-OWNER_PASSWORD = os.environ.get("OWNER_PASSWORD", "rioelixir")
-OWNER_NAME = os.environ.get("OWNER_NAME", "Ria Ahuja")
-SEED_CUSTOMER_EMAIL = os.environ.get("SEED_CUSTOMER_EMAIL", "taromaya@gmail.com").strip().lower()
-SEED_CUSTOMER_PASSWORD = os.environ.get("SEED_CUSTOMER_PASSWORD", "123456789")
-SEED_CUSTOMER_NAME = os.environ.get("SEED_CUSTOMER_NAME", "Maya")
+OWNER_EMAIL = os.environ["OWNER_EMAIL"].strip().lower()
+OWNER_PASSWORD = os.environ["OWNER_PASSWORD"]
+OWNER_NAME = os.environ["OWNER_NAME"]
+
+# Optional test/customer seed. No credentials are stored in source control.
+SEED_CUSTOMER_EMAIL = os.environ.get("SEED_CUSTOMER_EMAIL", "").strip().lower()
+SEED_CUSTOMER_PASSWORD = os.environ.get("SEED_CUSTOMER_PASSWORD", "")
+SEED_CUSTOMER_NAME = os.environ.get("SEED_CUSTOMER_NAME", "Customer")
 
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
 STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
@@ -235,7 +237,8 @@ async def startup():
     await db.users.create_index("email", unique=True)
     await db.users.create_index("id", unique=True)
     await ensure_user(OWNER_EMAIL, OWNER_PASSWORD, OWNER_NAME, "owner")
-    await ensure_user(SEED_CUSTOMER_EMAIL, SEED_CUSTOMER_PASSWORD, SEED_CUSTOMER_NAME, "customer")
+    if SEED_CUSTOMER_EMAIL and SEED_CUSTOMER_PASSWORD:
+        await ensure_user(SEED_CUSTOMER_EMAIL, SEED_CUSTOMER_PASSWORD, SEED_CUSTOMER_NAME, "customer")
     if not await db.settings.find_one({"_id": "app"}):
         s = dict(DEFAULT_SETTINGS)
         s["updated_at"] = datetime.now(timezone.utc).isoformat()
