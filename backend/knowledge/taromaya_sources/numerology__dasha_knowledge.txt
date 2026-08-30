@@ -1,0 +1,27 @@
+TAROMAYA Vedic Dasha Numerology semantic report knowledge. UI omitted.
+STATUS SCORE: >=80 Highly Favourable; >=65 Favourable; >=50 Moderate; >=38 Needs Care; below 38 Challenging.
+LIFE AREAS:
+Marriage | numbers 2,6,9 | strong: marriage talks mature smoothly, spouse brings stability | weak: delay/distance/postponement | advice: engagement/marriage dates inside Venus, Moon or Jupiter sub-period | avoid finalising alliance in Saturn/Rahu sub-period.
+Relationships | 2,6,7 | strong emotional understanding/loyalty | weak misunderstanding/silence | advice speak difficult sentence early | avoid major relationship decisions in anger or one conversation.
+Family | 2,4,6 | family support/household harmony | weak responsibility drains time/money | advice written transparent family finances | avoid undocumented property/money arrangements with relatives.
+Children | 3,5,6 | child/parenthood matters progress positively | weak patience/medical guidance/realistic timelines | plan in Jupiter/Venus sub-periods | avoid comparing timelines.
+Health | 1,4,9 | vitality/recovery | weak energy dips/old complaints | fixed sleep/meals and half-yearly check-up | avoid ignoring early symptoms/self-medication.
+Education | 3,4,5 | concentration/results supported | weak scattered focus/double prep | admissions/exams Mercury/Jupiter sub-period | avoid course/stream change midway.
+Career | 1,3,8 | recognition/promotion/better role | weak slow growth, effort not immediately rewarded | move toward fields ruled by Dasha lord | avoid resigning without written offer.
+Money | 3,6,8 | income rises/savings systematic | weak unplanned expenses/pending dues | automate savings on lucky dates | avoid lending/speculative bets.
+Property | 2,4,8 | land/home/vehicle matters conclude | weak registration/papers/possession delay | verify title/register on favourable sub-period date | avoid advance before legal verification.
+Foreign & Travel | 4,5,7 | travel/visa/relocation forward | weak documentation delay/rescheduling | file in Rahu/Mercury sub-period | avoid unverified agents/last-minute paperwork.
+Business | 3,5,8 | expansion/new clients/partnerships | weak tight cash cycle/expansion should wait | launch/expand Mercury/Jupiter/Venus | avoid unwritten partnerships/over-leverage.
+Investments | 3,5,6 | long-term investments compound | weak flat returns/capital protection | systematic long-term instruments | avoid leverage/tips/illiquid lock-ins.
+Government & Exams | 1,3,8 | government roles/exams/official work | weak slow files/repeat attempts | exams/applications Sun/Jupiter | avoid missed deadlines/incomplete docs.
+Leadership | 1,8,9 | authority/team command/public influence | weak authority questioned | lead by written commitments/delivery | avoid ego clashes/public confrontation.
+Foreign Settlement | 4,7,8 | long-stay visa/PR/settlement opening | weak postponement; short stays better | Rahu/Saturn filing/relocation | avoid selling home assets before visa stamp.
+Legal Matters | 3,8,9 | cases toward resolution/judgments favour | weak litigation drags/settlement may cost less | written/dated commitments | avoid verbal agreements/delayed replies/missed hearings.
+Politics & Public Life | 1,5,9 | public image/campaign/mass connect | weak visibility invites criticism | announcements/campaigns Sun/Mars | avoid unfiltered statements/untested alliances.
+Sports & Competition | 1,5,9 | stamina/competitive edge/selection peak | weak injury/inconsistent form | peak training Mars/Sun | avoid over-training/untreated injury.
+Spiritual Growth | 3,7,9 | inner clarity/study/practice deepen | weak restlessness | short fixed daily practice | avoid quick-result chasing/unverified guidance.
+AREA SCORE FORMULA: base 30 + support ratio*26 + friendly count*3 + Mahadasha direct-area boost 12 + Antardasha boost 8 + (Mahadasha score-50)*0.35, clamped 15–97. Confidence min(94, 58 + support*8 + direct-Mahadasha bonus 8).
+TIMELINE: current Mahadasha; favourable Antardasha windows used for new commitments/investment/launches; caution windows consolidate and avoid loans/disputes/speculation; next Mahadasha preparation about one year ahead.
+REMEDIES: running Mahadasha planet balancing throughout period; running Antardasha balancing until end; missing numbers up to 3 use planet remedies consistently 40 days; caution-window planet remedy starts 30 days before window. Priority high where scores <50.
+DAILY GUIDANCE uses current Pratyantar score. Good >=60: start/sign important work, approach seniors/clients before evening, use lucky dates for money decisions; always avoid overcommitment/verbal agreements. Weak: finish pending work, written short communication, planet remedy; avoid loans/disputes/speculation, rushed travel/docs, heed health theme.
+CALCULATION SYSTEM: with exact birth time use Vimshottari 120-year cycle from Moon exact sidereal longitude, birth nakshatra/pada/lord and balance at birth. Without exact birth time use VDN numerical 1–9 cycle. Fact sheet tracks Driver/Birth number, Destiny/Conductor, Name Number/Chaldean total, present/missing/repeated numbers, Personal Year/Month/Day, Universal Year, running Maha/Antar/Pratyantar, full sequence, upcoming Antardashas, favourable/caution windows, yogas, area dashboard, remedies and daily guidance.
