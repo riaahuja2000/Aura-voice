@@ -71,6 +71,18 @@ async def vercel_blob_health():
     }
 
 
+@app.get("/api/health/storage-options", include_in_schema=False)
+async def vercel_storage_options():
+    """Report presence of common persistent Vercel Marketplace data stores without secrets."""
+    return {
+        "postgres": bool((os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URL") or "").strip()),
+        "neon": bool((os.getenv("NEON_DATABASE_URL") or "").strip()),
+        "vercel_kv": bool((os.getenv("KV_REST_API_URL") or os.getenv("KV_URL") or "").strip()),
+        "upstash_redis": bool((os.getenv("UPSTASH_REDIS_REST_URL") or os.getenv("UPSTASH_REDIS_REST_TOKEN") or "").strip()),
+        "blob": bool((os.getenv("BLOB_STORE_ID") or "").strip()),
+    }
+
+
 # The Expo export is generated during the Vercel build and bundled into this
 # function via vercel.json includeFiles. Existing /api routes were registered
 # on backend_app before these frontend routes, so API behavior is unchanged.
