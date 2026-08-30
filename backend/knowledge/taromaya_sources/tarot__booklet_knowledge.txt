@@ -1,0 +1,245 @@
+TAROMAYA Booklet AI — supplied category/card knowledge. Strict categories. Format: Category | Card | English | Roman Hindi.
+DIVORCE / SEPARATION | Justice | Divorce / Legal Separation | Talāq / Kanooni Judai
+DIVORCE / SEPARATION | The Tower | Sudden Separation | Achanak Rishta Tootna
+DIVORCE / SEPARATION | 10 of Swords | Marriage Ending | Shaadi Ka Ant
+DIVORCE / SEPARATION | 8 of Cups | Walking Away | Rishta Chhod Kar Aage Badhna
+DIVORCE / SEPARATION | 5 of Cups | Divorce Pain / Regret | Judai Ka Dukh / Pachtawa
+DIVORCE / SEPARATION | 2 of Swords | Divorce Decision Pending | Talāq Ka Faisla Abhi Atka Hai
+DIVORCE / SEPARATION | The Hanged Man | Divorce Delayed | Talāq Mein Der
+DIVORCE / SEPARATION | 5 of Wands | Marital Conflict | Shaadi Mein Bahut Takkar
+DIVORCE / SEPARATION | 3 of Swords | Heartbreak / Separation | Dil Tootna / Judai
+DIVORCE / SEPARATION | 6 of Swords | Moving Away After Separation | Judai Ke Baad Door Jaana
+DIVORCE / SEPARATION | Judgement | Final Divorce Decision | Talāq Ka Aakhri Faisla
+DIVORCE / SEPARATION | The World | Marriage Chapter Closed | Shaadi Ka Chapter Poora Khatam
+DIVORCE / SEPARATION | Temperance | Separation Can Be Healed | Rishta Sambhalne Ki Gunjaish
+DIVORCE / SEPARATION | 2 of Cups | Reconciliation After Separation | Judai Ke Baad Patch-Up
+DIVORCE / SEPARATION | The Hermit | Living Separately | Alag-Alag Rehna
+DIVORCE / SEPARATION | Queen of Swords | Independent After Divorce | Talāq Ke Baad Apni Zindagi Khud Sambhalna
+DIVORCE / SEPARATION | King of Swords | Legal / Formal Decision | Kanooni Aur Formal Faisla
+DIVORCE / SEPARATION | 6 of Pentacles | Financial Settlement | Paise / Settlement Ka Bantwara
+DIVORCE / SEPARATION | 10 of Pentacles | Property / Family Settlement | Khandani Property Ka Settlement
+DIVORCE / SEPARATION | The Star | Healing After Divorce | Talāq Ke Baad Dheere Dheere Healing
+Negative Energy | 7 of Swords | Evil Eye | Buri Nazar
+Negative Energy | The Moon | Hidden Enemy | Chhupa Dushman
+Negative Energy | The Devil | Heavy Negative Energy | Bahut Heavy Negative Energy
+Negative Energy | The Tower | Sudden Shock | Achanak Jhatka
+Negative Energy | 10 of Swords | Major Betrayal | Bada Dhokha
+Negative Energy | 9 of Swords | Mental Fear | Dimaag Ka Darr
+Negative Energy | 8 of Swords | Feeling Trapped | Fasa Hua Mehsoos Karna
+Negative Energy | 5 of Pentacles | Weak Aura | Kamzor Aura
+Third Party | 3 of Swords | Third Person Interference | Teesre Vyakti Ka Dakhal
+Third Party | The Lovers | Choice Between Two | Do Mein Se Chunav
+Third Party | 7 of Cups | Confusion Due To Options | Options Ki Wajah Se Confusion
+Third Party | The Moon | Hidden Person Involved | Koi Chhupa Vyakti Shamil
+Third Party | Queen of Swords | Another Woman Involved | Koi Doosri Stri Shamil
+Third Party | Knight of Wands | Another Man Involved | Koi Doosra Purush Shamil
+Third Party | 5 of Swords | Conflict Over The Person | Vyakti Ko Lekar Takraar
+Love & Relationship | The Lovers | Deep Love Connection | Gehra Prem Sambandh
+Love & Relationship | 2 of Cups | Mutual Feelings | Dono Taraf Se Feelings
+Love & Relationship | 10 of Cups | Happy Relationship | Khush Rishta
+Love & Relationship | Ace of Cups | New Love Beginning | Naye Pyar Ki Shuruaat
+Love & Relationship | Knight of Cups | Romantic Proposal | Romantic Prastav
+Love & Relationship | The Empress | Nurturing Love | Sambhalne Wala Pyar
+Love & Relationship | 3 of Swords | Heartbreak | Dil Tootna
+Love & Relationship | 5 of Cups | Emotional Disappointment | Bhavnatmak Nirasha
+Love & Relationship | 4 of Cups | Emotional Distance | Bhavnatmak Doori
+Love & Relationship | The Hierophant | Traditional Committed Bond | Paramparik Committed Rishta
+Commitment & Marriage | The Hierophant | Marriage / Formal Commitment | Shaadi / Aupcharik Commitment
+Commitment & Marriage | 4 of Wands | Wedding Celebration | Shaadi Ka Utsav
+Commitment & Marriage | 10 of Cups | Family Happiness After Marriage | Shaadi Ke Baad Parivarik Khushi
+Commitment & Marriage | 2 of Cups | Engagement / Mutual Promise | Sagai / Aapsi Vaada
+Commitment & Marriage | The World | Completion Of Commitment | Commitment Poora Hona
+Commitment & Marriage | 7 of Cups | Undecided About Commitment | Commitment Par Faisla Nahi
+Commitment & Marriage | The Hanged Man | Delay In Marriage | Shaadi Mein Der
+Commitment & Marriage | 2 of Swords | Decision Pending | Faisla Baaki Hai
+Commitment & Marriage | 8 of Cups | Walking Away From Commitment | Commitment Chhod Dena
+Ex & Reconciliation | 6 of Cups | Return Of The Past | Purana Wapas Aana
+Ex & Reconciliation | The Wheel of Fortune | Cycle Repeating | Chakra Dobara Ghoomna
+Ex & Reconciliation | Judgement | Second Chance | Doosra Mauka
+Ex & Reconciliation | Knight of Cups | Ex Reaching Out | Ex Sampark Karega
+Ex & Reconciliation | 8 of Cups | Moving On | Aage Badh Jana
+Ex & Reconciliation | The Tower | Permanent Break | Sthayi Alagav
+Ex & Reconciliation | 5 of Cups | Regret Over The Past | Beete Par Pachhtava
+Ex & Reconciliation | Temperance | Slow Healing Reunion | Dheere Dheere Judav
+Pregnancy & Baby | The Empress | Pregnancy / Fertility | Garbhdharan / Prajnan Shakti
+Pregnancy & Baby | Ace of Cups | New Life Beginning | Naye Jeevan Ki Shuruaat
+Pregnancy & Baby | Ace of Wands | Conception Energy | Garbhdharan Ki Urja
+Pregnancy & Baby | The Sun | Healthy Baby | Swasth Shishu
+Pregnancy & Baby | The Star | Hope And Blessing | Umeed Aur Aashirvaad
+Pregnancy & Baby | 10 of Cups | Family Completion | Parivar Poora Hona
+Pregnancy & Baby | Page of Cups | News Of A Child | Bachche Ki Khabar
+Pregnancy & Baby | The High Priestess | Not Yet Revealed | Abhi Zahir Nahi Hua
+Pregnancy & Baby | The Hanged Man | Delay In Conception | Garbhdharan Mein Der
+Pregnancy & Baby | 4 of Swords | Rest Advised | Aaram Ki Salah
+Pregnancy & Baby | The Hierophant | Medical Guidance Needed | Doctor Ki Salah Zaruri
+Pregnancy & Baby | 5 of Cups | Loss Or Sorrow | Nuksan Ya Dukh
+Health & Well-being | The Sun | Health Improving | Health Mein Sudhaar
+Health & Well-being | The Star | Recovery | Recovery Ho Rahi Hai
+Health & Well-being | 4 of Swords | Rest Needed | Aaram Ki Zarurat
+Health & Well-being | 6 of Swords | Gradual Recovery | Dheere Dheere Sudhaar
+Health & Well-being | Temperance | Balance Needed | Santulan Ki Zarurat
+Health & Well-being | 5 of Pentacles | Needs Attention | Dhyan Dene Ki Zarurat Hai
+Health & Well-being | 9 of Swords | Stress Affecting Well-Being | Stress Health Ko Affect Kar Raha Hai
+Health & Well-being | 10 of Wands | Exhaustion | Bahut Thakan Hai
+Health & Well-being | The Tower | Sudden Health Concern | Achanak Health Concern
+Health & Well-being | The Hierophant | Professional Medical Guidance | Doctor Ki Salah Zaruri
+Health & Well-being | The Hanged Man | Slow Recovery | Recovery Mein Samay Lagega
+Career & Job | Ace of Pentacles | New Job Opportunity | Naye Job Ka Mauka
+Career & Job | 3 of Pentacles | Teamwork And Skill | Teamwork Aur Hunar
+Career & Job | 8 of Pentacles | Hard Work And Training | Mehnat Aur Training
+Career & Job | 6 of Wands | Promotion / Recognition | Promotion / Pehchan
+Career & Job | The Chariot | Progress Through Effort | Mehnat Se Tarakki
+Career & Job | 10 of Wands | Work Overload | Kaam Ka Bojh
+Career & Job | 5 of Pentacles | Job Insecurity | Naukri Ki Asuraksha
+Career & Job | 8 of Cups | Leaving The Job | Naukri Chhodna
+Career & Job | The Hanged Man | Career On Hold | Career Ruka Hua
+Career & Job | Knight of Pentacles | Steady Reliable Work | Sthir Bharosemand Kaam
+Business | The Magician | Skill And Strategy Work | Hunar Aur Strategy Kaam Karegi
+Business | Ace of Pentacles | New Business Opportunity | Naye Business Ka Mauka
+Business | 3 of Pentacles | Partnership / Collaboration | Saajhedari / Sahyog
+Business | The Emperor | Strong Structure And Control | Mazboot Dhaancha Aur Niyantran
+Business | 6 of Pentacles | Balanced Cash Flow | Santulit Cash Flow
+Business | 9 of Pentacles | Business Profit | Business Mein Munafa
+Business | 5 of Pentacles | Business Loss | Business Mein Nuksan
+Business | 7 of Pentacles | Patience Before Returns | Return Se Pehle Sabr
+Business | The Tower | Sudden Business Disruption | Achanak Business Mein Rukavat
+Business | 2 of Pentacles | Juggling Resources | Resources Sambhalna
+Money & Finance | Ace of Pentacles | New Income Source | Aamdani Ka Naya Zariya
+Money & Finance | 9 of Pentacles | Financial Gain | Aarthik Fayda
+Money & Finance | 10 of Pentacles | Long-Term Wealth | Lambe Samay Ki Sampatti
+Money & Finance | 6 of Pentacles | Money Received Or Given | Paisa Milna Ya Dena
+Money & Finance | 4 of Pentacles | Saving And Holding Money | Paisa Bachana Aur Rokna
+Money & Finance | 5 of Pentacles | Financial Shortage | Paise Ki Kami
+Money & Finance | 7 of Pentacles | Slow Financial Growth | Dheemi Aarthik Vriddhi
+Money & Finance | The Tower | Sudden Financial Shock | Achanak Aarthik Jhatka
+Money & Finance | 8 of Pentacles | Earning Through Effort | Mehnat Se Kamai
+Share Market & Trading | Ace of Pentacles | Investment Opportunity | Nivesh Ka Mauka
+Share Market & Trading | 9 of Pentacles | Profit / Gain | Munafa / Fayda
+Share Market & Trading | 10 of Pentacles | Long-Term Growth | Lambe Samay Ka Fayda
+Share Market & Trading | 7 of Pentacles | Long-Term Hold | Lambe Samay Tak Hold
+Share Market & Trading | Knight of Wands | Short-Term Fast Move | Short-Term Tez Movement
+Share Market & Trading | 2 of Pentacles | High Volatility | Market Mein Utaar-Chadhaav
+Share Market & Trading | 4 of Pentacles | Capital Protection | Capital Bachakar Rakhna
+Share Market & Trading | 5 of Pentacles | Loss | Nuksan
+Share Market & Trading | The Tower | Sudden Market Shock | Market Mein Achanak Jhatka
+Share Market & Trading | The Hanged Man | Delayed Return | Return Mein Der
+Betting | Wheel of Fortune | Luck Factor Active | Kismat Ka Factor Active
+Betting | Ace of Wands | Favourable Chance | Anukool Mauka
+Betting | 6 of Wands | Winning Outcome | Jeet Ka Parinaam
+Betting | 7 of Cups | Illusion / False Hope | Bhram / Jhoothi Umeed
+Betting | 5 of Pentacles | Money Loss | Paise Ka Nuksan
+Betting | The Devil | Addiction Risk | Lat Lagne Ka Khatra
+Betting | 10 of Swords | Total Loss | Poora Nuksan
+Betting | 4 of Pentacles | Stop And Protect Money | Rukiye Aur Paisa Bachaiye
+Sports | The Chariot | Victory Through Discipline | Anushasan Se Jeet
+Sports | 6 of Wands | Winning / Trophy | Jeet / Trophy
+Sports | 7 of Wands | Tough Competition | Kadi Takkar
+Sports | Strength | Stamina And Confidence | Dam Aur Aatmvishwas
+Sports | 8 of Pentacles | Training And Practice | Training Aur Abhyas
+Sports | 5 of Swords | Unfair Play | Anuchit Khel
+Sports | 10 of Wands | Overexertion Injury Risk | Zyada Zor Se Chot Ka Khatra
+Sports | The Tower | Sudden Upset Result | Achanak Ulta Parinaam
+Legal / Court | Justice | Fair Judgement | Nyaypurn Faisla
+Legal / Court | Judgement | Final Verdict | Antim Faisla
+Legal / Court | The Emperor | Authority And Law | Satta Aur Kanoon
+Legal / Court | 7 of Wands | Defending Your Case | Apna Paksh Bachana
+Legal / Court | 5 of Wands | Ongoing Dispute | Chal Rahi Ladai
+Legal / Court | 2 of Swords | Case Stuck / Stalemate | Case Atka Hua
+Legal / Court | The Hanged Man | Legal Delay | Kanooni Der
+Legal / Court | 10 of Swords | Loss Of Case | Case Haarna
+Legal / Court | 6 of Wands | Winning The Case | Case Jeetna
+Legal / Court | 7 of Swords | Hidden Evidence Or Deceit | Chhupa Sabut Ya Dhokha
+Property | 4 of Wands | New Home | Naya Ghar
+Property | 10 of Pentacles | Property Inheritance / Asset | Sampatti Virasat / Asset
+Property | Ace of Pentacles | Property Deal Opportunity | Property Deal Ka Mauka
+Property | The Empress | Comfortable Home | Aaramdayak Ghar
+Property | 6 of Pentacles | Fair Deal / Payment | Uchit Sauda / Bhugtan
+Property | The Hanged Man | Deal Delay | Deal Mein Der
+Property | 5 of Pentacles | Property Loss Or Burden | Sampatti Ka Nuksan Ya Bojh
+Property | 7 of Swords | Fraud In Documents | Kaagzaat Mein Dhokha
+Property | The Tower | Sudden Property Problem | Achanak Property Samasya
+Education / Exams | The Hierophant | Formal Study / Guidance | Aupcharik Padhai / Margdarshan
+Education / Exams | 8 of Pentacles | Consistent Study | Lagatar Padhai
+Education / Exams | The Chariot | Success Through Focus | Ekagrata Se Safalta
+Education / Exams | 6 of Wands | Exam Success | Pariksha Mein Safalta
+Education / Exams | Page of Pentacles | Student / New Learning | Vidyarthi / Nayi Padhai
+Education / Exams | 9 of Swords | Exam Anxiety | Pariksha Ka Tanav
+Education / Exams | 7 of Cups | Distraction / Confusion | Dhyan Bhatakna / Confusion
+Education / Exams | The Hanged Man | Result Delay | Result Mein Der
+Travel / Foreign | The World | Foreign Travel / Abroad | Videsh Yatra
+Travel / Foreign | 8 of Wands | Fast Travel / Quick Movement | Tez Yatra / Jaldi Movement
+Travel / Foreign | 6 of Swords | Relocation / Moving Away | Sthanantar / Door Jana
+Travel / Foreign | The Chariot | Journey Begins | Yatra Shuru
+Travel / Foreign | Knight of Wands | Sudden Trip | Achanak Yatra
+Travel / Foreign | The Hanged Man | Visa Or Travel Delay | Visa Ya Yatra Mein Der
+Travel / Foreign | 4 of Pentacles | Staying Where You Are | Wahin Rukna
+Travel / Foreign | 5 of Pentacles | Financial Barrier To Travel | Yatra Mein Paise Ki Rukavat
+Family | 10 of Cups | Family Harmony | Parivarik Sukh-Shanti
+Family | The Empress | Mother Figure | Maa Samaan Vyakti
+Family | The Emperor | Father Figure | Pita Samaan Vyakti
+Family | 10 of Pentacles | Family Wealth And Legacy | Parivarik Sampatti Aur Virasat
+Family | 4 of Wands | Family Celebration | Parivarik Utsav
+Family | 5 of Cups | Family Grief | Parivarik Dukh
+Family | 5 of Wands | Family Conflict | Parivarik Kalah
+Family | 3 of Swords | Family Separation | Parivarik Alagav
+Friendship | 3 of Cups | True Friendship | Sacchi Dosti
+Friendship | 2 of Cups | Close Bond | Gehra Rishta
+Friendship | 6 of Cups | Old Friend Returning | Purana Dost Wapas
+Friendship | Page of Cups | Friendly Message | Dostana Sandesh
+Friendship | 5 of Swords | Friendship Conflict | Dosti Mein Takraar
+Friendship | 7 of Swords | Fake Friend | Nakli Dost
+Friendship | 8 of Cups | Friendship Ending | Dosti Khatam
+Communication | Page of Swords | Message Or News | Sandesh Ya Khabar
+Communication | 8 of Wands | Fast Reply Coming | Jaldi Jawab Aayega
+Communication | The Magician | Clear Confident Speech | Saaf Aatmvishwas Bhari Baat
+Communication | 2 of Cups | Honest Conversation | Imaandaar Baatcheet
+Communication | The High Priestess | Silence / No Reply | Chuppi / Koi Jawab Nahi
+Communication | 4 of Swords | Pause In Communication | Baatcheet Mein Viraam
+Communication | 5 of Swords | Argument | Behas
+Communication | 7 of Swords | Half Truth Being Told | Aadha Sach Bataya Ja Raha Hai
+Hidden / Secret | The High Priestess | Secret Not Revealed Yet | Raaz Abhi Zahir Nahi
+Hidden / Secret | The Moon | Hidden Truth / Illusion | Chhupa Sach / Bhram
+Hidden / Secret | 7 of Swords | Something Done Secretly | Kuch Chhupkar Kiya Gaya
+Hidden / Secret | 2 of Swords | Truth Being Avoided | Sach Se Bachna
+Hidden / Secret | The Hermit | Deliberate Withdrawal | Jaan-Boojhkar Doori
+Hidden / Secret | Judgement | Secret Coming Out | Raaz Bahar Aayega
+Hidden / Secret | The Sun | Everything Revealed Clearly | Sab Kuch Saaf Zahir
+Cheating / Betrayal | 7 of Swords | Deceit / Cheating | Dhokha / Cheating
+Cheating / Betrayal | The Devil | Secret Attachment Or Lust | Chhupa Lagav Ya Vasna
+Cheating / Betrayal | 3 of Swords | Betrayal Causing Pain | Dhokhe Se Dard
+Cheating / Betrayal | 10 of Swords | Complete Betrayal | Poora Dhokha
+Cheating / Betrayal | The Moon | Lies Being Hidden | Jhooth Chhupaya Ja Raha Hai
+Cheating / Betrayal | 5 of Swords | Selfish Behaviour | Swarthi Vyavhaar
+Cheating / Betrayal | Judgement | Truth Will Surface | Sach Samne Aayega
+Spiritual / Intuitive | The High Priestess | Strong Intuition | Mazboot Antarghyan
+Spiritual / Intuitive | The Hermit | Inner Search / Meditation | Aantarik Khoj / Dhyan
+Spiritual / Intuitive | The Star | Divine Blessing | Ishwariya Aashirvaad
+Spiritual / Intuitive | Temperance | Spiritual Balance | Aatmik Santulan
+Spiritual / Intuitive | Judgement | Spiritual Awakening | Aatmik Jagran
+Spiritual / Intuitive | The Moon | Psychic Dreams | Antargyani Sapne
+Spiritual / Intuitive | The World | Completion Of A Soul Cycle | Aatma Ke Chakra Ka Poorn Hona
+Remedy / Solution | Temperance | Balance And Moderation | Santulan Aur Sanyam
+Remedy / Solution | The Star | Healing And Hope | Upchaar Aur Umeed
+Remedy / Solution | The Hermit | Guidance From A Wise Person | Gyani Vyakti Ka Margdarshan
+Remedy / Solution | Strength | Patience And Inner Control | Dheeraj Aur Aatm-Niyantran
+Remedy / Solution | The Magician | Take Practical Action | Vyavharik Kadam Uthaiye
+Remedy / Solution | 4 of Swords | Rest And Reset | Aaram Aur Reset
+Remedy / Solution | 6 of Pentacles | Charity / Giving | Daan / Dena
+Remedy / Solution | Judgement | Forgive And Release | Maaf Karke Chhodna
+Timing | 8 of Wands | Very Soon / Fast | Bahut Jaldi
+Timing | The Chariot | Within Weeks | Kuch Hafton Mein
+Timing | Wheel of Fortune | At The Right Turn Of Time | Sahi Samay Aane Par
+Timing | 7 of Pentacles | After A Long Wait | Lambe Intezaar Ke Baad
+Timing | The Hanged Man | Delay / On Hold | Der / Ruka Hua
+Timing | 4 of Swords | Not Now, Later | Abhi Nahi, Baad Mein
+Timing | Judgement | At A Decisive Moment | Nirnayak Samay Par
+Timing | The World | At Completion Of The Cycle | Chakra Poora Hone Par
+Final Outcome | The World | Successful Completion | Safal Samapti
+Final Outcome | The Sun | Positive Happy Result | Sakaratmak Khushi Bhara Parinaam
+Final Outcome | 6 of Wands | Victory | Jeet
+Final Outcome | 10 of Cups | Emotional Fulfilment | Bhavnatmak Poornata
+Final Outcome | Wheel of Fortune | Result Changes With Time | Samay Ke Saath Parinaam Badlega
+Final Outcome | The Hanged Man | Outcome Delayed | Parinaam Mein Der
+Final Outcome | 10 of Swords | Painful Ending | Dukhad Ant
+Final Outcome | The Tower | Sudden Unexpected End | Achanak Anapekshit Ant
+Final Outcome | Judgement | Final Decision Delivered | Antim Faisla Aayega
