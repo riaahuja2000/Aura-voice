@@ -1,0 +1,63 @@
+/**
+ * Mobile Numerology — pre-indexed source knowledge (Patch v1.0 §5–§12, §19).
+ * Source of truth: Mobile Number Numerology Master Sheet.
+ * Backend knowledge only; no UI.
+ */
+export const MOBILE_SOURCE = {
+  title: "Mobile Number Numerology Master Sheet",
+  ruleSetVersion: "mobile-master-sheet-v1.0",
+  patch: "Vedic Numerology + Mobile Numerology Pro Backend Patch v1.0",
+} as const;
+
+export const KING_TABLE = {
+  1: { lucky: [1, 2, 3, 5, 9], enemy: [], hardCoreEnemy: [8], neutral: [6, 4, 7] },
+  2: { lucky: [1, 3, 5], enemy: [9, 4], hardCoreEnemy: [8], neutral: [6, 2, 7] },
+  3: { lucky: [1, 2, 3, 5, 7], enemy: [], hardCoreEnemy: [6], neutral: [7, 8, 9, 4] },
+  4: { lucky: [1, 6, 7, 8, 4], enemy: [9, 2, 4, 8], hardCoreEnemy: [], neutral: [3, 5], note: "Source lists 4 and 8 in both lucky and enemy columns; preserve both." },
+  5: { lucky: [1, 2, 3, 5, 6], enemy: [], hardCoreEnemy: [], neutral: [7, 8, 9, 4] },
+  6: { lucky: [4, 5, 6, 7], enemy: [3], hardCoreEnemy: [3], neutral: [8, 9, 2, 1], note: "Source lists 3 as both enemy and hard core enemy; preserve both." },
+  7: { lucky: [1, 4, 5, 6], enemy: [3, 8, 9, 2, 7], hardCoreEnemy: [], neutral: [] },
+  8: { lucky: [3, 5, 6, 4, 8], enemy: [1, 2, 4, 8], hardCoreEnemy: [1, 2], neutral: [9, 7], note: "Source overlap exceptions are preserved exactly." },
+  9: { lucky: [1, 3, 5], enemy: [4, 2], hardCoreEnemy: [], neutral: [9, 8, 7, 6] },
+};
+
+export const REPETITION_THRESHOLD = 3;
+export const SOURCE_REPETITIONS = [11,22,33,44,55,66,77,88,99] as const;
+export const REPETITION_NOTE = "A repeated number becomes significant at 3 or more repetitions; traditional numerology association only.";
+
+export const GOOD_COMBOS = [
+  ["12",["12"]],["13/31",["13","31"]],["15/51",["15","51"]],["25/52",["25","52"]],
+  ["29/92",["29","92"]],["37/73",["37","73"]],["38/83",["38","83"]],["47/74",["47","74"]],
+  ["57/75",["57","75"]],["69/96",["69","96"]],["78/87",["78","87"]]
+];
+export const NEUTRAL_COMBOS = [
+  ["17/71",["17","71"]],["19/91",["19","91"]],["21",["21"]],["24/42",["24","42"]],
+  ["35/53",["35","53"]],["36/63",["36","63"]],["39/93",["39","93"]],["49/94",["49","94"]],
+  ["56/65",["56","65"]],["58/85",["58","85"]],["59/95",["59","95"]],["79/97",["79","97"]]
+];
+export const NEGATIVE_COMBOS = [
+  ["14/41","Most Negative"],["16/61","Most Negative"],["18/81","Very Negative"],["23/32","Malefic"],
+  ["26/62","Malefic"],["27/72","Malefic"],["28/82","Very Negative"],["34/43","Malefic"],
+  ["45/54","Malefic"],["46/64","Malefic"],["48/84","Very Negative"],["67/76","Malefic"],
+  ["68/86","Malefic"],["89/98","Most Negative"]
+];
+
+export const TOTAL_RULES = {
+  1: { preference: [46,64,37,55], purposes: "Job and government-related issues, authority, career, politics, profession." },
+  3: { preference: [66,39,30], purposes: "Knowledge, prosperity, teaching, luck, health." },
+  5: { preference: [41,32,50,59], purposes: "Balance, education, profession, business, communication, money flow." },
+  6: { preference: [42,24,33,60], purposes: "Marriage, luxury, relationship and money flow, foreign connection.", notes: "42 for marriage/luxury; 33 for abroad/foreign travel/relationship/money flow." },
+};
+
+export const AVOID_LIST = [
+  "14","41","16","61","18","81","23","32","26","62","27","72","28","82","34","43","45","54","46","64","48","84","67","76","68","86","89","98",
+  "36","63","49","94","58","85","00","000","0000","99","999","88","888","77","777","666","555","444","44","333","22","222","111"
+];
+
+export const SAFETY = [
+  "Traditional numerology associations are not medical diagnoses, legal/financial facts or guaranteed outcomes.",
+  "Do not invent unsupported compounds.",
+  "Do not mix Vedic Dasha rules into Mobile Numerology.",
+  "Do not mix Western Lo Shu unless explicitly requested and clearly labelled.",
+  "Avoid-list findings are informational; report favourable and negative findings together."
+];
