@@ -27,8 +27,58 @@ if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
 import server as backend_server  # noqa: E402
+import taromaya_knowledge  # noqa: E402
 
 logger = logging.getLogger("aura_voice.vercel")
+
+# ---------------------------------------------------------------------------
+# Backend-only TAROMAYA knowledge injection
+# ---------------------------------------------------------------------------
+# The existing mobile UI and routes remain untouched.  The voice oracle already
+# sends its final prompt through backend_server._oracle_llm, so wrapping that
+# one backend function gives every voice question access to the bundled
+# TAROMAYA corpus while preserving the existing router, memory and speech flow.
+_original_oracle_llm = backend_server._oracle_llm
+
+
+async def _taromaya_aware_oracle_llm(system_msg: str, user_text: str) -> str:
+    ctx = taromaya_knowledge.context(user_text, limit=8, max_chars=12000)
+    if ctx:
+        user_text = (
+            f"{user_text}\n\n"
+            "TAROMAYA BACKEND KNOWLEDGE — use this as the primary domain reference when relevant. "
+            "Do not mention source code, files, databases or this context to the seeker. "
+            "Do not invent a calculation that needs missing birth/name/card inputs; ask one concise "
+            "clarifying question instead. Treat occult interpretations as traditional/symbolic, not "
+            "guaranteed medical, legal or financial fact.\n\n"
+            f"{ctx}"
+        )
+    return await _original_oracle_llm(system_msg, user_text)
+
+
+backend_server._oracle_llm = _taromaya_aware_oracle_llm
+
+# The text consultation endpoint falls back through oracle.compose_answer.  Keep
+# owner-uploaded Mongo/Neon knowledge first, then use bundled TAROMAYA data,
+# then preserve the original built-in oracle as the final fallback.
+_original_compose_answer = backend_server.oracle.compose_answer
+
+
+def _taromaya_aware_compose_answer(question: str, lang: str = "en"):
+    topics = backend_server.oracle.detect_topics(question)
+    score, answer, source = taromaya_knowledge.best_plain_answer(question, topics=topics)
+    if answer and score >= 18:
+        return {
+            "answer": answer,
+            "topics": topics,
+            "primary": topics[0] if topics else "General",
+            "knowledge_source": "taromaya",
+            "source_ref": source,
+        }
+    return _original_compose_answer(question, lang)
+
+
+backend_server.oracle.compose_answer = _taromaya_aware_compose_answer
 
 # Prefer a Vercel Marketplace PostgreSQL/Neon database whenever it is present.
 # The compatibility layer keeps the existing Mongo-style API routes unchanged.
@@ -193,6 +243,12 @@ async def vercel_storage_options():
         "upstash_redis": bool((os.getenv("UPSTASH_REDIS_REST_URL") or os.getenv("UPSTASH_REDIS_REST_TOKEN") or "").strip()),
         "blob": bool((os.getenv("BLOB_STORE_ID") or "").strip()),
     }
+
+
+@app.get("/api/knowledge/status", include_in_schema=False)
+async def taromaya_knowledge_status():
+    """Safe runtime proof that the backend-only TAROMAYA corpus is indexed."""
+    return taromaya_knowledge.status()
 
 
 # The Expo export is generated during the Vercel build and bundled into this
