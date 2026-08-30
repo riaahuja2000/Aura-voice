@@ -1,24 +1,27 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "cd frontend && yarn install --frozen-lockfile && npx expo export --platform web --output-dir dist",
+  "installCommand": "cd frontend && yarn install --frozen-lockfile",
+  "buildCommand": "cd frontend && npx expo export --platform web --output-dir dist",
   "outputDirectory": "frontend/dist",
-  "installCommand": "pip install -r requirements.txt || true",
-  "builds": [
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "backend/**",
+      "maxDuration": 60
+    }
+  },
+  "routes": [
     {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "50mb", "runtime": "python3.11" }
+      "src": "/api/(.*)",
+      "dest": "/api/index.py"
     },
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist", "buildCommand": "yarn install --frozen-lockfile && npx expo export --platform web --output-dir dist" }
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.py" },
-    { "src": "/(.*\\.[a-zA-Z0-9]+)$", "dest": "/frontend/dist/$1" },
-    { "src": "/(.*)", "dest": "/frontend/dist/index.html" }
   ],
   "env": {
     "PYTHONUNBUFFERED": "1"
