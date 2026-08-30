@@ -11,6 +11,8 @@ import inspect
 import logging
 import os
 import sys
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import HTTPException
@@ -46,6 +48,80 @@ if _database_url:
 
 backend_app = backend_server.app
 
+
+async def _sync_managed_account(
+    email: str,
+    password: str,
+    name: str,
+    role: str,
+    *,
+    lifetime_free: bool = False,
+) -> None:
+    """Keep designated accounts aligned with encrypted Vercel environment values."""
+    email = (email or "").strip().lower()
+    password = password or ""
+    if not email or not password:
+        return
+
+    now = datetime.now(timezone.utc).isoformat()
+    existing = await backend_server.db.users.find_one({"email": email})
+
+    common = {
+        "name": (name or ("Owner" if role == "owner" else "Customer")).strip(),
+        "email": email,
+        "role": role,
+        "active": True,
+    }
+    if role == "owner":
+        common.update({
+            "protected_account": True,
+            "account_type": "owner",
+        })
+    if lifetime_free:
+        common.update({
+            "permanent_free": True,
+            "plan": "lifetime_free",
+            "billing_required": False,
+            "subscription_expires_at": None,
+        })
+
+    if existing:
+        password_changed = not backend_server.verify_pw(
+            password,
+            existing.get("password_hash", ""),
+        )
+        updates = dict(common)
+        if password_changed:
+            updates["password_hash"] = backend_server.hash_pw(password)
+            updates["token_version"] = (existing.get("token_version", 0) or 0) + 1
+        await backend_server.db.users.update_one(
+            {"email": email},
+            {"$set": updates},
+        )
+        logger.info(
+            "Synced managed %s account (password_updated=%s, lifetime_free=%s)",
+            role,
+            password_changed,
+            lifetime_free,
+        )
+        return
+
+    doc = {
+        "id": str(uuid.uuid4()),
+        **common,
+        "password_hash": backend_server.hash_pw(password),
+        "language": "en",
+        "token_version": 0,
+        "created_at": now,
+    }
+    await backend_server.db.users.insert_one(doc)
+    logger.info(
+        "Created managed %s account (lifetime_free=%s)",
+        role,
+        lifetime_free,
+    )
+
+
 # Keep the original backend startup behavior, but do not let a temporary
 # external-service failure make the entire Vercel function fail before the
 # frontend can load.
@@ -62,6 +138,25 @@ async def _resilient_vercel_startup():
                 await result
         except Exception as exc:
             logger.exception("Aura Voice startup dependency failed: %s", exc)
+
+    # Enforce the designated owner and the permanent free customer after the
+    # normal seed step. Passwords remain only in encrypted Vercel variables.
+    try:
+        await _sync_managed_account(
+            os.getenv("OWNER_EMAIL", ""),
+            os.getenv("OWNER_PASSWORD", ""),
+            os.getenv("OWNER_NAME", "Owner"),
+            "owner",
+        )
+        await _sync_managed_account(
+            os.getenv("SEED_CUSTOMER_EMAIL", ""),
+            os.getenv("SEED_CUSTOMER_PASSWORD", ""),
+            os.getenv("SEED_CUSTOMER_NAME", "Customer"),
+            "customer",
+            lifetime_free=True,
+        )
+    except Exception as exc:
+        logger.exception("Aura Voice managed-account sync failed: %s", exc)
 
 
 # Explicit top-level assignment is required by Vercel's Python runtime.
